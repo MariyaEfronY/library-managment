@@ -1,20 +1,25 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IBook extends Document {
+  bookId: string;
   title: string;
   author: string;
   category: string;
-  totalCopies: number;
   availableCopies: number;
+  imageUrl?: string;
 }
 
-const bookSchema = new Schema<IBook>({
-  title: { type: String, required: true },
-  author: { type: String, required: true },
-  category: { type: String, required: true },
-  totalCopies: { type: Number, required: true },
-  availableCopies: { type: Number, required: true },
-});
+const BookSchema = new Schema<IBook>(
+  {
+    bookId: { type: String, required: true, unique: true },
+    title: { type: String, required: true },
+    author: { type: String, required: true },
+    category: { type: String, required: true },
+    availableCopies: { type: Number, required: true },
+    imageUrl: { type: String },
+  },
+  { timestamps: true }
+);
 
-export default mongoose.models.Book ||
-  mongoose.model<IBook>("Book", bookSchema);
+// FIX: prevents overwrite error in Next.js
+export default mongoose.models.Book || mongoose.model("Book", BookSchema);
