@@ -8,7 +8,6 @@ export async function POST(req: NextRequest) {
   try {
     await connectToDB();
     const body = await req.json();
-    console.log("📥 BODY:", body);
 
     const { id, password } = body;
 
@@ -27,7 +26,6 @@ export async function POST(req: NextRequest) {
       (await User.findOne({ staffId: id })) ||
       (await User.findOne({ adminId: id }));
 
-    console.log("👤 USER FOUND:", user);
 
     if (!user) {
       console.log("❌ No user found for ID:", id);
@@ -52,8 +50,6 @@ export async function POST(req: NextRequest) {
       staffId: user.staffId,
       adminId: user.adminId,
     });
-
-    console.log("✅ LOGIN SUCCESS");
 
     return NextResponse.json({
       message: "Login successful",
