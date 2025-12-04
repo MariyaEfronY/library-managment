@@ -7,15 +7,43 @@ import { generateToken } from "@/lib/auth";
 export async function POST(req: NextRequest) {
   try {
     await connectToDB();
-    const { email, password } = await req.json();
+    const body = await req.json();
+    console.log("📥 BODY:", body);
 
-    const user = await User.findOne({ email });
-    if (!user)
-      return NextResponse.json({ error: "Invalid email" }, { status: 400 });
+    const { id, password } = body;
+
+    if (!id || !password) {
+      console.log("❌ Missing ID or Password");
+      return NextResponse.json(
+        { error: "ID and password are required" },
+        { status: 400 }
+      );
+    }
+
+    console.log("🔎 Searching for user with ID:", id);
+
+    const user =
+      (await User.findOne({ rollNumber: id })) ||
+      (await User.findOne({ staffId: id })) ||
+      (await User.findOne({ adminId: id }));
+
+    console.log("👤 USER FOUND:", user);
+
+    if (!user) {
+      console.log("❌ No user found for ID:", id);
+      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return NextResponse.json({ error: "Invalid password" }, { status: 400 });
+    console.log("🔐 PASSWORD MATCH:", isMatch);
+
+    if (!isMatch) {
+      console.log("❌ Incorrect password");
+      return NextResponse.json(
+        { error: "Incorrect password" },
+        { status: 400 }
+      );
+    }
 
     const token = generateToken({
       id: user._id,
@@ -25,12 +53,15 @@ export async function POST(req: NextRequest) {
       adminId: user.adminId,
     });
 
+    console.log("✅ LOGIN SUCCESS");
+
     return NextResponse.json({
       message: "Login successful",
       token,
       user,
     });
   } catch (error: any) {
+    console.log("💥 SERVER ERROR:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
