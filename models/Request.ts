@@ -34,7 +34,9 @@ const RequestSchema = new Schema<IRequest>({
   },
 
   requestDate: { type: Date, default: Date.now },
-});
+  
+},
+ { timestamps: true });
 
 export default mongoose.models.Request ||
   mongoose.model<IRequest>("Request", RequestSchema);

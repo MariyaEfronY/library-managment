@@ -37,8 +37,8 @@ export default function LoginPage() {
       
       // Add small delay to show success message
       setTimeout(() => {
-        if (data.user.role === "student") window.location.href = "/student";
-        else if (data.user.role === "staff") window.location.href = "/staff";
+        if (data.user.role === "student") window.location.href = "/dashboard/student";
+        else if (data.user.role === "staff") window.location.href = "/dashboard/staff";
         else window.location.href = "/admin";
       }, 1000);
     } catch {
