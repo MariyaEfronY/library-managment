@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
 
     // Fetch requests for this user
     const requests = await Request.find({ requestedBy: authUser.id })
-      .populate("bookId", "title author availableCopies") // fetch book details
+      .populate("bookId", "imageUrl title author availableCopies") // fetch book details
       .sort({ createdAt: -1 });
 
     return NextResponse.json({ success: true, requests });

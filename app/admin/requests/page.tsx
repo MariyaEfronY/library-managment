@@ -92,9 +92,13 @@ export default function AdminRequests() {
       <div className="space-y-4">
         {requests.map(req => (
           <div key={req._id} className="border border-gray-200 p-4 rounded-lg shadow-sm">
-            <p className="font-semibold text-lg">Book: {req.bookId?.title || "Unknown"} — {req.bookId?.author || "Unknown"}</p>
+            <p className="font-semibold text-lg">Book:{req.bookId?.bookId || "Unknown"} <br />
+              Title:{req.bookId?.title || "Unknown"}  <br />
+              Auther: {req.bookId?.author || "Unknown"}</p> <br />
+              Available Copies: {req.bookId?.availableCopies ?? "N/A"}
             <p className="text-sm text-gray-700">
-  User: {req.requestedBy?.name} ({req.requestedBy?.email})
+  User: {req.requestedBy?.name} <br />
+  Email : {req.requestedBy?.email}
 </p>
 
 {req.requestedBy?.role === "student" && (
