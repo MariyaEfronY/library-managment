@@ -7,38 +7,31 @@ import { generateToken } from "@/lib/auth";
 export async function POST(req: NextRequest) {
   try {
     await connectToDB();
-    const body = await req.json();
-
-    const { id, password } = body;
+    const { id, password } = await req.json();
 
     if (!id || !password) {
-      console.log("❌ Missing ID or Password");
       return NextResponse.json(
-        { error: "ID and password are required" },
+        { success: false, message: "ID and password required" },
         { status: 400 }
       );
     }
-
-    console.log("🔎 Searching for user with ID:", id);
 
     const user =
       (await User.findOne({ rollNumber: id })) ||
       (await User.findOne({ staffId: id })) ||
       (await User.findOne({ adminId: id }));
 
-
     if (!user) {
-      console.log("❌ No user found for ID:", id);
-      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Invalid ID" },
+        { status: 400 }
+      );
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log("🔐 PASSWORD MATCH:", isMatch);
-
     if (!isMatch) {
-      console.log("❌ Incorrect password");
       return NextResponse.json(
-        { error: "Incorrect password" },
+        { success: false, message: "Incorrect password" },
         { status: 400 }
       );
     }
@@ -46,18 +39,32 @@ export async function POST(req: NextRequest) {
     const token = generateToken({
       id: user._id,
       role: user.role,
-      rollNumber: user.rollNumber,
-      staffId: user.staffId,
-      adminId: user.adminId,
     });
 
-    return NextResponse.json({
+    const res = NextResponse.json({
+      success: true,
       message: "Login successful",
-      token,
-      user,
+      user: {
+        id: user._id,
+        role: user.role,
+        name: user.name,
+      },
     });
-  } catch (error: any) {
-    console.log("💥 SERVER ERROR:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // 🔐 STORE TOKEN
+    res.cookies.set("token", token, {
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    return res;
+  } catch (err: any) {
+    return NextResponse.json(
+      { success: false, message: err.message },
+      { status: 500 }
+    );
   }
 }
