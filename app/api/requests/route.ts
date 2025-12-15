@@ -65,7 +65,11 @@ export async function GET() {
     await connectToDB();
 
     const requests = await Request.find()
-      .populate("requestedBy", "name email")
+      .populate(
+  "requestedBy",
+  "name email role rollNumber staffId"
+)
+
       .populate("bookId", "title author availableCopies");
 
     console.log("Fetched requests:", requests); // 🔍 important

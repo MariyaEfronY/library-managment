@@ -93,7 +93,22 @@ export default function AdminRequests() {
         {requests.map(req => (
           <div key={req._id} className="border border-gray-200 p-4 rounded-lg shadow-sm">
             <p className="font-semibold text-lg">Book: {req.bookId?.title || "Unknown"} — {req.bookId?.author || "Unknown"}</p>
-            <p className="text-sm text-gray-700">User: {req.requestedBy?.name || "Unknown"} ({req.requestedBy?.email || "Unknown"})</p>
+            <p className="text-sm text-gray-700">
+  User: {req.requestedBy?.name} ({req.requestedBy?.email})
+</p>
+
+{req.requestedBy?.role === "student" && (
+  <p className="text-sm text-blue-600 font-medium">
+    Roll No: {req.requestedBy?.rollNumber || "N/A"}
+  </p>
+)}
+
+{req.requestedBy?.role === "staff" && (
+  <p className="text-sm text-purple-600 font-medium">
+    Staff ID: {req.requestedBy?.staffId || "N/A"}
+  </p>
+)}
+
             <p className={`mt-1 font-bold ${req.status === 'pending' ? 'text-yellow-600' : req.status === 'approved' ? 'text-green-600' : 'text-red-600'}`}>
                 Status: {req.status.toUpperCase()}
             </p>
