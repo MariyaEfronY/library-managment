@@ -544,7 +544,7 @@ export default function AdminRequests() {
               <div className="space-y-2 text-sm">
                 <p><span className="text-gray-600">Title:</span> {req.bookId?.title}</p>
                 <p><span className="text-gray-600">Author:</span> {req.bookId?.author}</p>
-                <p><span className="text-gray-600">ISBN:</span> {req.bookId?.isbn || "N/A"}</p>
+                <p><span className="text-gray-600">Book Id:</span> {req.bookId?.bookId || "N/A"}</p>
                 <p><span className="text-gray-600">Category:</span> {req.bookId?.category || "N/A"}</p>
               </div>
             </div>

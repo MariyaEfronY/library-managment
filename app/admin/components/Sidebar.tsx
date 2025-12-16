@@ -35,12 +35,12 @@ export default function Sidebar() {
       icon: <BookPlus className="w-5 h-5" />,
       badge: null,
     },
-    // {
-    //   name: "Manage Books",
-    //   href: "/admin/books",
-    //   icon: <BookOpen className="w-5 h-5" />,
-    //   badge: 12,
-    // },
+    {
+      name: " Books Requests",
+      href: "/admin/requests",
+      icon: <BookOpen className="w-5 h-5" />,
+      badge: null,
+    },
     // {
     //   name: "Users",
     //   href: "/admin/users",

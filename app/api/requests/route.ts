@@ -70,7 +70,7 @@ export async function GET() {
   "name email role rollNumber staffId"
 )
 
-      .populate("bookId", "imageUrl bookId title author availableCopies");
+      .populate("bookId", "imageUrl bookId title author availableCopies category");
 
     console.log("Fetched requests:", requests); // 🔍 important
 

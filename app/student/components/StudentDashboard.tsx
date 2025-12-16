@@ -1,5 +1,7 @@
 "use client";
+
 import { useEffect, useState } from "react";
+import StudentSidebar from "./StudentSidebar";
 
 export default function StudentDashboard() {
   const [requests, setRequests] = useState<any[]>([]);
@@ -7,8 +9,8 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     fetch("/api/requests/my")
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (data.success) {
           setRequests(data.requests);
         }
@@ -18,17 +20,8 @@ export default function StudentDashboard() {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      
       {/* SIDEBAR */}
-      <aside className="w-64 bg-indigo-700 text-white p-6 space-y-6">
-        <h2 className="text-xl font-bold">📘 Student Panel</h2>
-        <nav className="space-y-3">
-          <p className="font-semibold">Dashboard</p>
-          <p className="opacity-80">My Requests</p>
-          <p className="opacity-80">Issued Books</p>
-          <p className="opacity-80">Logout</p>
-        </nav>
-      </aside>
+      <StudentSidebar />
 
       {/* MAIN CONTENT */}
       <main className="flex-1 p-6">
@@ -40,9 +33,8 @@ export default function StudentDashboard() {
           <p className="text-gray-500">No book requests found</p>
         )}
 
-        {/* CARD GRID */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {requests.map(req => (
+          {requests.map((req) => (
             <div
               key={req._id}
               className="bg-white rounded-lg shadow p-4 border"
@@ -64,6 +56,7 @@ export default function StudentDashboard() {
               <h3 className="mt-3 text-lg font-semibold">
                 {req.bookId?.title}
               </h3>
+
               <p className="text-sm text-gray-600">
                 Author: {req.bookId?.author}
               </p>
@@ -71,13 +64,13 @@ export default function StudentDashboard() {
               <p className="mt-2 font-semibold">
                 Status:{" "}
                 <span
-                  className={`${
+                  className={
                     req.status === "approved"
                       ? "text-green-600"
                       : req.status === "rejected"
                       ? "text-red-600"
                       : "text-yellow-600"
-                  }`}
+                  }
                 >
                   {req.status.toUpperCase()}
                 </span>
