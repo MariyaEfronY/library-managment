@@ -18,7 +18,17 @@ export default function StudentDashboard() {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-     
+      
+      {/* SIDEBAR */}
+      <aside className="w-64 bg-indigo-700 text-white p-6 space-y-6">
+        <h2 className="text-xl font-bold">📘 Student Panel</h2>
+        <nav className="space-y-3">
+          <p className="font-semibold">Dashboard</p>
+          <p className="opacity-80">My Requests</p>
+          <p className="opacity-80">Issued Books</p>
+          <p className="opacity-80">Logout</p>
+        </nav>
+      </aside>
 
       {/* MAIN CONTENT */}
       <main className="flex-1 p-6">
@@ -70,7 +80,7 @@ export default function StudentDashboard() {
                   }`}
                 >
                   {req.status.toUpperCase()}
-                </span>
+                </span> 
               </p>
 
               {req.returnDate && (
