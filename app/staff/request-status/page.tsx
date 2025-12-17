@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 
-export default function StudentDashboard() {
+export default function StaffDashboard() {
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -9,80 +9,34 @@ export default function StudentDashboard() {
     fetch("/api/requests/my")
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-          setRequests(data.requests);
-        }
+        if (data.success) setRequests(data.requests);
       })
       .finally(() => setLoading(false));
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
-     
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6">My Book Requests (Staff)</h1>
 
-      {/* MAIN CONTENT */}
-      <main className="flex-1 p-6">
-        <h1 className="text-2xl font-bold mb-6">My Book Requests</h1>
+      {loading && <p>Loading...</p>}
 
-        {loading && <p>Loading...</p>}
+      {!loading && requests.length === 0 && (
+        <p className="text-gray-500">No requests found</p>
+      )}
 
-        {!loading && requests.length === 0 && (
-          <p className="text-gray-500">No book requests found</p>
-        )}
-
-        {/* CARD GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {requests.map(req => (
-            <div
-              key={req._id}
-              className="bg-white rounded-lg shadow p-4 border"
-            >
-              {/* IMAGE */}
-              {req.bookId?.imageUrl ? (
-                <img
-                  src={req.bookId.imageUrl}
-                  alt={req.bookId.title}
-                  className="w-full h-48 object-cover rounded"
-                />
-              ) : (
-                <div className="h-48 flex items-center justify-center bg-gray-200 rounded">
-                  No Image
-                </div>
-              )}
-
-              {/* DETAILS */}
-              <h3 className="mt-3 text-lg font-semibold">
-                {req.bookId?.title}
-              </h3>
-              <p className="text-sm text-gray-600">
-                Author: {req.bookId?.author}
-              </p>
-
-              <p className="mt-2 font-semibold">
-                Status:{" "}
-                <span
-                  className={`${
-                    req.status === "approved"
-                      ? "text-green-600"
-                      : req.status === "rejected"
-                      ? "text-red-600"
-                      : "text-yellow-600"
-                  }`}
-                >
-                  {req.status.toUpperCase()}
-                </span>
-              </p>
-
-              {req.returnDate && (
-                <p className="text-sm text-red-600 mt-1">
-                  Return By:{" "}
-                  {new Date(req.returnDate).toLocaleDateString()}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-      </main>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {requests.map(req => (
+          <div key={req._id} className="bg-white p-4 shadow rounded">
+            <img
+              src={req.bookId?.imageUrl}
+              className="h-40 w-full object-cover rounded"
+            />
+            <h3 className="mt-2 font-semibold">{req.bookId?.title}</h3>
+            <p className="text-sm">{req.bookId?.author}</p>
+            <p className="mt-2 font-bold">{req.status.toUpperCase()}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

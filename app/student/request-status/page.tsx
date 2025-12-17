@@ -21,7 +21,7 @@ export default function StudentDashboard() {
      
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 p-6">
+       <main className="flex-1 overflow-y-auto bg-gray-100 p-6 lg:ml-64">
         <h1 className="text-2xl font-bold mb-6">My Book Requests</h1>
 
         {loading && <p>Loading...</p>}

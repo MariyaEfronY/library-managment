@@ -1,18 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import {
-  Home,
+  LayoutDashboard,
+  ClipboardList,
   BookOpen,
-  Clock,
   LogOut,
   Menu,
   X,
   ChevronRight,
 } from "lucide-react";
-import { useRouter, usePathname } from "next/navigation";
 
-export default function StudentSidebar() {
+export default function StaffSidebar() {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -36,13 +36,25 @@ export default function StudentSidebar() {
   }, [isMobileMenuOpen]);
 
   const menuItems = [
-    { id: 1, label: "Dashboard", icon: <Home size={20} />, path: "/student" },
-    { id: 2, label: "Books", icon: <BookOpen size={20} />, path: "/student/requests" },
-    { id: 3, label: "Requests Status", icon: <Clock size={20} />, path: "/student/request-status" },
+    {
+      label: "Dashboard",
+      icon: <LayoutDashboard size={20} />,
+      path: "/staff",
+    },
+    {
+      label: "Book Requests",
+      icon: <ClipboardList size={20} />,
+      path: "/staff/requests",
+    },
+    {
+      label: "Request Status",
+      icon: <BookOpen size={20} />,
+      path: "/staff/request-status",
+    },
   ];
 
   const handleNavigation = (path: string) => {
-    router.push(path);          // ✅ REAL NAVIGATION
+    router.push(path);
     setIsMobileMenuOpen(false);
   };
 
@@ -69,10 +81,12 @@ export default function StudentSidebar() {
       {/* Sidebar */}
       <aside
         className={`
-          sidebar fixed top-0 left-0 z-40
+          sidebar
+          fixed top-0 left-0
           w-64 h-screen
+          z-40
           bg-gradient-to-b from-indigo-700 to-purple-800 text-white
-          flex flex-col overflow-hidden
+          flex flex-col
           transition-transform duration-300 ease-in-out
           ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
@@ -80,12 +94,12 @@ export default function StudentSidebar() {
         {/* Header */}
         <div className="p-6 border-b border-indigo-600/50">
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-sm">
               <BookOpen size={28} />
             </div>
             <div>
-              <h2 className="text-xl font-bold">Student Panel</h2>
-              <p className="text-sm text-indigo-200">Library Access</p>
+              <h2 className="text-xl font-bold">Staff Panel</h2>
+              <p className="text-sm text-indigo-200">Library Management</p>
             </div>
           </div>
         </div>
@@ -97,34 +111,50 @@ export default function StudentSidebar() {
 
             return (
               <button
-                key={item.id}
+                key={item.path}
                 onClick={() => handleNavigation(item.path)}
                 className={`
                   flex items-center justify-between w-full p-3 rounded-xl
                   transition-all duration-200 group
-                  ${isActive
-                    ? "bg-white/20 shadow-lg"
-                    : "hover:bg-white/10"}
+                  ${
+                    isActive
+                      ? "bg-white/20 shadow-lg backdrop-blur-sm"
+                      : "hover:bg-white/10 hover:backdrop-blur-sm"
+                  }
                 `}
               >
                 <div className="flex items-center space-x-3">
                   <div
                     className={`
-                      p-2 rounded-lg
-                      ${isActive
-                        ? "bg-white text-indigo-700"
-                        : "bg-white/10 text-white group-hover:bg-white/20"}
+                      p-2 rounded-lg transition-colors duration-200
+                      ${
+                        isActive
+                          ? "bg-white text-indigo-700"
+                          : "bg-white/10 text-white group-hover:bg-white/20"
+                      }
                     `}
                   >
                     {item.icon}
                   </div>
-                  <span className="font-medium">{item.label}</span>
+                  <span
+                    className={`font-medium ${
+                      isActive ? "text-white" : "text-gray-100"
+                    }`}
+                  >
+                    {item.label}
+                  </span>
                 </div>
 
                 <ChevronRight
                   size={18}
-                  className={`transition-transform duration-200
-                    ${isActive ? "rotate-90 text-white" : "text-white/50"}`}
+                  className={`
+                    transition-transform duration-200
+                    ${
+                      isActive
+                        ? "text-white rotate-90"
+                        : "text-white/50 group-hover:text-white"
+                    }
+                  `}
                 />
               </button>
             );
@@ -134,15 +164,17 @@ export default function StudentSidebar() {
         {/* Logout */}
         <div className="p-4 border-t border-indigo-600/50 mt-auto">
           <button
-            onClick={() => {
-              // TODO: clear auth token here
-              router.push("/login");
-            }}
-            className="flex items-center justify-center space-x-3 p-3 rounded-xl w-full
+            onClick={() => router.push("/login")}
+            className="flex items-center justify-center space-x-3 p-3 rounded-xl
                        bg-gradient-to-r from-red-500/20 to-red-600/20
-                       hover:from-red-500/30 hover:to-red-600/30 transition"
+                       hover:from-red-500/30 hover:to-red-600/30
+                       backdrop-blur-sm transition-all duration-200 w-full
+                       hover:shadow-lg group"
           >
-            <LogOut size={20} />
+            <LogOut
+              size={20}
+              className="group-hover:rotate-12 transition-transform duration-200"
+            />
             <span className="font-medium">Logout</span>
           </button>
         </div>

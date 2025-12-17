@@ -37,7 +37,7 @@ export default function StudentRequests() {
   };
 
   return (
-    <div className="p-6">
+    <div className="flex-1 overflow-y-auto bg-gray-100 p-6 lg:ml-64">
       <h2 className="text-xl font-bold mb-6">Available Books</h2>
 
       {books.length === 0 && <p>No books available</p>}
