@@ -21,14 +21,12 @@ function extractIdFromUrl(req: NextRequest): string | null {
     return null;
 }
 
-export async function PATCH(
-    req: NextRequest,
-    // We still include { params } in the signature to satisfy the App Router requirements, 
-    // but we won't use it.
-    { params }: { params: { id: string } } 
-) {
-    // --- FIX: Extract ID directly from the request URL ---
-    const id = extractIdFromUrl(req); 
+export const PATCH = async (
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) => {
+  const { id } = await params;
+
     
     if (!id) {
         return NextResponse.json(
