@@ -79,18 +79,24 @@ export default function StaffSidebar() {
       />
 
       {/* Sidebar */}
-      <aside
-        className={`
-          sidebar
-          fixed top-0 left-0
-          w-64 h-screen
-          z-40
-          bg-gradient-to-b from-indigo-700 to-purple-800 text-white
-          flex flex-col
-          transition-transform duration-300 ease-in-out
-          ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-        `}
-      >
+<aside
+  className={`
+    sidebar
+    w-64
+    h-full
+    bg-gradient-to-b from-indigo-700 to-purple-800 text-white
+    flex flex-col
+    fixed lg:static
+    top-0 left-0
+    z-50
+    transition-transform duration-300
+    ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+  `}
+>
+
+
+
+
         {/* Header */}
         <div className="p-6 border-b border-indigo-600/50">
           <div className="flex items-center space-x-3">
