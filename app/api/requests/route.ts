@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   try {
     await connectToDB();
 
-    const authUser = getAuthUser(req); // ✅ pass req
+    const authUser = getAuthUser(req);
     if (!authUser) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
@@ -25,21 +25,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 1. Check for duplicate requests (Pending or Approved)
+    const existingRequest = await Request.findOne({
+      requestedBy: authUser.id,
+      bookId: bookId,
+      status: { $in: ["pending", "approved"] }
+    });
+
+    if (existingRequest) {
+      const msg = existingRequest.status === "pending" 
+        ? "You already have a pending request for this book." 
+        : "You already have this book approved/borrowed.";
+      return NextResponse.json({ success: false, message: msg }, { status: 400 });
+    }
+
+    // 2. Verify book exists and is available
     const book = await Book.findById(bookId);
     if (!book) {
-      return NextResponse.json(
-        { success: false, message: "Book not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, message: "Book not found" }, { status: 404 });
     }
 
     if (book.availableCopies === 0) {
-      return NextResponse.json(
-        { success: false, message: "Book not available" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, message: "Book not available" }, { status: 400 });
     }
 
+    // 3. Create the request
     const request = await Request.create({
       requestedBy: authUser.id,
       requestedRole: authUser.role,
@@ -49,18 +59,14 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Request sent",
+      message: "Request sent successfully",
       request,
     });
   } catch (err: any) {
-    console.error("REQUEST ERROR:", err);
-    return NextResponse.json(
-      { success: false, message: err.message },
-      { status: 500 }
-    );
+    console.error("REQUEST_POST_ERROR:", err);
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
   }
 }
-
 export async function GET() {
   try {
     await connectToDB();
