@@ -22,6 +22,37 @@ import {
 import React from "react";
 
 
+interface Book {
+  _id: string;
+  bookId?: string;
+  title?: string;
+  author?: string;
+  imageUrl?: string;
+  availableCopies?: number;
+  category?: string;
+}
+
+interface RequestedBy {
+  _id: string;
+  name?: string;
+  email?: string;
+  role?: "student" | "staff";
+  rollNumber?: string;
+  staffId?: string;
+  contact?: string;
+}
+
+interface RequestItem {
+  _id: string;
+  bookId?: Book;          // 👈 populated object
+  requestedBy?: RequestedBy;
+  status: "pending" | "approved" | "rejected";
+  requestDate: string;
+  returnDate?: string;
+  updatedAt?: string;
+}
+
+
 const formatDate = (date: string | Date | undefined) => {
   if (!date) return 'N/A';
   return new Date(date).toLocaleDateString('en-US', {
@@ -32,8 +63,8 @@ const formatDate = (date: string | Date | undefined) => {
 };
 
 export default function AdminRequests() {
-  const [requests, setRequests] = useState<any[]>([]);
-  const [filteredRequests, setFilteredRequests] = useState<any[]>([]);
+  const [requests, setRequests] = useState<RequestItem[]>([]);
+  const [filteredRequests, setFilteredRequests] = useState<RequestItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,22 +80,35 @@ export default function AdminRequests() {
   const [tempReturnDate, setTempReturnDate] = useState("");
 
   const fetchRequests = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/requests");
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || "Failed to fetch requests");
-      }
-      setRequests(data.requests || []);
-      setFilteredRequests(data.requests || []);
-      setError(null);
-    } catch (err: any) {
-      setError(err.message || "An error occurred fetching requests.");
-    } finally {
-      setLoading(false);
+  try {
+    setLoading(true);
+
+    const res = await fetch("/api/requests", {
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch requests");
     }
-  };
+
+    const data = await res.json();
+    console.log("API DATA:", data);
+
+
+    // ✅ HANDLE BOTH API RESPONSE SHAPES
+    const requestsData = data.requests ?? data;
+
+    setRequests(requestsData);
+    setFilteredRequests(requestsData);
+    setError(null);
+  } catch (err: any) {
+    console.error("Fetch error:", err);
+    setError(err.message || "Something went wrong");
+  } finally {
+    // 🔑 THIS WAS NEVER REACHED BEFORE
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchRequests();
@@ -187,16 +231,17 @@ export default function AdminRequests() {
 
   const stats = getRequestStats();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading requests...</p>
-        </div>
+ if (loading) {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+        <p className="mt-4 text-black">Loading requests...</p>
       </div>
-    );
-  }
+    </div>
+  );
+}
+
 
   if (error) {
     return (
@@ -399,33 +444,35 @@ export default function AdminRequests() {
       <td className="p-4">
         <div className="flex items-start gap-3">
           {req.bookId?.imageUrl ? (
-            <img
-              src={req.bookId.imageUrl}
-              alt={req.bookId.title}
-              className="w-12 h-16 object-cover rounded"
-            />
-          ) : (
-            <div className="w-12 h-16 bg-gray-100 rounded flex items-center justify-center">
-              <BookOpen className="w-6 h-6 text-gray-400" />
-            </div>
-          )}
+  <img
+    src={req.bookId.imageUrl}
+    alt={req.bookId?.title || "Book"}
+    className="w-12 h-16 object-cover rounded"
+  />
+) : (
+  <div className="w-12 h-16 bg-gray-100 rounded flex items-center justify-center">
+    <BookOpen className="w-6 h-6 text-gray-400" />
+  </div>
+)}
           <div>
-            <p className="font-semibold text-gray-900 line-clamp-1">
-              {req.bookId?.title || "Unknown Book"}
-            </p>
-            <p className="text-sm text-gray-600">
-              by {req.bookId?.author || "Unknown Author"}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Copies: {req.bookId?.availableCopies ?? "N/A"}
-            </p>
+           <p className="font-semibold text-gray-900 line-clamp-1">
+  {req.bookId?.title ?? "Unknown Book"}
+</p>
+
+<p className="text-sm text-gray-600">
+  by {req.bookId?.author ?? "Unknown Author"}
+</p>
+
+<p className="text-xs text-gray-500 mt-1">
+  Copies: {req.bookId?.availableCopies ?? "N/A"}
+</p>
           </div>
         </div>
       </td>
       <td className="p-4">
         <div className="flex items-center gap-2 mb-1">
           <User className="w-4 h-4 text-gray-400" />
-          <span className="font-medium">{req.requestedBy?.name}</span>
+          <span className="font-medium text-black">{req.requestedBy?.name}</span>
           <span className={`text-xs px-2 py-0.5 rounded-full ${
             req.requestedBy?.role === "student" 
               ? "bg-blue-100 text-blue-800" 
@@ -453,7 +500,7 @@ export default function AdminRequests() {
         <div className="space-y-1">
           <p className="text-sm">
             <span className="text-gray-600">Requested:</span>
-            <span className="ml-2 font-medium">
+            <span className="ml-2 font-medium text-green-500">
               {formatDate(req.requestDate)}
             </span>
           </p>
@@ -543,29 +590,29 @@ export default function AdminRequests() {
             <div className="bg-white p-4 rounded-lg border">
               <h4 className="font-semibold text-gray-900 mb-2">Book Information</h4>
               <div className="space-y-2 text-sm">
-                <p><span className="text-gray-600">Title:</span> {req.bookId?.title}</p>
-                <p><span className="text-gray-600">Author:</span> {req.bookId?.author}</p>
-                <p><span className="text-gray-600">Book Id:</span> {req.bookId?.bookId || "N/A"}</p>
-                <p><span className="text-gray-600">Category:</span> {req.bookId?.category || "N/A"}</p>
+                <p className="text-gray-600"><span className="text-black">Title:</span>  {req.bookId?.title}</p>
+                <p className="text-gray-600"><span className="text-black">Author:</span> {req.bookId?.author}</p>
+                <p className="text-gray-600"><span className="text-black">Book Id:</span> {req.bookId?.bookId || "N/A"}</p>
+                <p className="text-gray-600"><span className="text-black">Category:</span> {req.bookId?.category || "N/A"}</p>
               </div>
             </div>
             <div className="bg-white p-4 rounded-lg border">
               <h4 className="font-semibold text-gray-900 mb-2">User Information</h4>
               <div className="space-y-2 text-sm">
-                <p><span className="text-gray-600">Name:</span> {req.requestedBy?.name}</p>
-                <p><span className="text-gray-600">Email:</span> {req.requestedBy?.email}</p>
-                <p><span className="text-gray-600">Role:</span> {req.requestedBy?.role}</p>
-                <p><span className="text-gray-600">Contact:</span> {req.requestedBy?.contact || "N/A"}</p>
+                <p className="text-gray-600"><span className="text-black">Name:</span> {req.requestedBy?.name}</p>
+                <p className="text-gray-600"><span className="text-black">Email:</span> {req.requestedBy?.email}</p>
+                <p className="text-gray-600"><span className="text-black">Role:</span> {req.requestedBy?.role}</p>
+                <p className="text-gray-600"><span className="text-black">Contact:</span> {req.requestedBy?.contact || "N/A"}</p>
               </div>
             </div>
             <div className="bg-white p-4 rounded-lg border">
               <h4 className="font-semibold text-gray-900 mb-2">Request Details</h4>
               <div className="space-y-2 text-sm">
-                <p><span className="text-gray-600">Request ID:</span> {req._id}</p>
-                <p><span className="text-gray-600">Request Date:</span> {formatDate(req.requestDate)}</p>
-                <p><span className="text-gray-600">Status Updated:</span> {formatDate(req.updatedAt)}</p>
+                <p className="text-gray-600"><span className="text-black">Request ID:</span> {req._id}</p>
+                <p className="text-gray-600"><span className="text-black">Request Date:</span> {formatDate(req.requestDate)}</p>
+                <p className="text-gray-600"><span className="text-black">Status Updated:</span> {formatDate(req.updatedAt)}</p>
                 {req.returnDate && (
-                  <p><span className="text-gray-600">Return Date:</span> {formatDate(req.returnDate)}</p>
+                  <p className="text-gray-600"><span className="text-black">Return Date:</span> {formatDate(req.returnDate)}</p>
                 )}
               </div>
             </div>

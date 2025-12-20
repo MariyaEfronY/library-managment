@@ -11,42 +11,43 @@ export default function LoginPage() {
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    setIsLoading(true);
+ // Replace your existing handleLogin logic with this fix:
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError("");
+  setSuccess("");
+  setIsLoading(true);
 
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, password }),
-      });
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, password }),
+    });
 
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Login failed");
-        setIsLoading(false);
-        return;
-      }
+    const data = await res.json();
 
-      setSuccess("Login successful!");
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      
-      // Add small delay to show success message
-      setTimeout(() => {
-        if (data.user.role === "student") window.location.href = "/student";
-        else if (data.user.role === "staff") window.location.href = "/staff";
-        else window.location.href = "/admin";
-      }, 1000);
-    } catch {
-      setError("Something went wrong");
+    if (!res.ok) {
+      // FIX: Your API uses 'message', but frontend looks for 'error'
+      setError(data.message || "Login failed"); 
       setIsLoading(false);
+      return;
     }
-  };
 
+    setSuccess("Login successful!");
+    // The token is now in a HttpOnly cookie, so we don't need to manually store it 
+    localStorage.setItem("user", JSON.stringify(data.user));
+    
+    setTimeout(() => {
+      if (data.user.role === "student") window.location.href = "/student";
+      else if (data.user.role === "staff") window.location.href = "/staff";
+      else window.location.href = "/admin";
+    }, 1000);
+  } catch (err) {
+    setError("Something went wrong");
+    setIsLoading(false);
+  }
+};
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-4">
       <div className="w-full max-w-md">

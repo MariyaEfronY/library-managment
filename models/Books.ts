@@ -6,7 +6,7 @@ export interface IBook extends Document {
   author: string;
   category: string;
   availableCopies: number;
-  status: "valid" | "invalid";
+  status: "valid" | "invalid";    
   imageUrl?: string;
 }
 
@@ -20,4 +20,4 @@ const BookSchema = new Schema<IBook>({
   imageUrl: { type: String },
 });
 
-export default mongoose.models.Book || mongoose.model<IBook>("Book", BookSchema);
+export default mongoose.models.Book || mongoose.model("Book", BookSchema);
