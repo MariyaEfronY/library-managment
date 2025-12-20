@@ -512,16 +512,26 @@ export default function AdminRequests() {
         <div className="flex items-center gap-2">
           {req.status === "pending" && activeRequestId === req._id ? (
             <div className="flex flex-col gap-2 bg-gray-50 p-3 rounded-lg">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-gray-500" />
-                <input
-                  type="date"
-                  value={tempReturnDate}
-                  onChange={(e) => setTempReturnDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                  className="border rounded px-2 py-1 text-sm"
-                />
-              </div>
+              <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-xl px-3 py-2 shadow-sm hover:border-gray-400 transition">
+  <Calendar className="w-4 h-4 text-gray-600" />
+
+  <input
+    type="date"
+    value={tempReturnDate}
+    onChange={(e) => setTempReturnDate(e.target.value)}
+    min={new Date().toISOString().split("T")[0]}
+    className="
+      bg-transparent
+      outline-none
+      text-sm
+      text-black
+      placeholder-gray-500
+      cursor-pointer
+      focus:ring-0
+    "
+  />
+</div>
+
               <div className="flex gap-2">
                 <button
                   onClick={() => updateStatus(req._id, "approved")}
