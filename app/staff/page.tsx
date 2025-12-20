@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BookOpen } from "lucide-react";
 
-export default function StaffDashboard() {
-  const [requests, setRequests] = useState<any[]>([]);
+export default function StudentDashboard() {
+  const [totalRequests, setTotalRequests] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -11,74 +12,52 @@ export default function StaffDashboard() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          setRequests(data.requests);
+          setTotalRequests(data.requests.length);
         }
       })
       .finally(() => setLoading(false));
   }, []);
 
   return (
-    <>
-      <h1 className="text-2xl font-bold mb-6">My Book Requests</h1>
+    <div>
 
-      {loading && <p>Loading...</p>}
 
-      {!loading && requests.length === 0 && (
-        <p className="text-gray-500">No book requests found</p>
-      )}
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto bg-gray-100 p-6 ">
+        
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">
+            Staff Dashboard
+          </h1>
+          <p className="text-gray-600">
+            Overview of your library activity
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {requests.map((req) => (
-          <div
-            key={req._id}
-            className="bg-white rounded-lg shadow p-4 border"
-          >
-            {/* Image */}
-            {req.bookId?.imageUrl ? (
-              <img
-                src={req.bookId.imageUrl}
-                alt={req.bookId.title}
-                className="w-full h-48 object-cover rounded"
-              />
-            ) : (
-              <div className="h-48 flex items-center justify-center bg-gray-200 rounded">
-                No Image
-              </div>
-            )}
-
-            {/* Details */}
-            <h3 className="mt-3 text-lg font-semibold">
-              {req.bookId?.title}
-            </h3>
-
-            <p className="text-sm text-gray-600">
-              Author: {req.bookId?.author}
-            </p>
-
-            <p className="mt-2 font-semibold">
-              Status:{" "}
-              <span
-                className={
-                  req.status === "approved"
-                    ? "text-green-600"
-                    : req.status === "rejected"
-                    ? "text-red-600"
-                    : "text-yellow-600"
-                }
-              >
-                {req.status.toUpperCase()}
-              </span>
-            </p>
-
-            {req.returnDate && (
-              <p className="text-sm text-red-600 mt-1">
-                Return By:{" "}
-                {new Date(req.returnDate).toLocaleDateString()}
+        {/* Total Requests Card */}
+        <div className="max-w-sm">
+          <div className="bg-white rounded-xl shadow border border-gray-200 p-6 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">
+                Total Book Requests
               </p>
-            )}
+              {loading ? (
+                <div className="h-8 w-16 bg-gray-200 rounded animate-pulse mt-2" />
+              ) : (
+                <h2 className="text-3xl font-bold text-indigo-600 mt-2">
+                  {totalRequests}
+                </h2>
+              )}
+            </div>
+
+            <div className="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center">
+              <BookOpen className="text-indigo-600" size={28} />
+            </div>
           </div>
-        ))}
-      </div>
-    </>
+        </div>
+
+      </main>
+    </div>
   );
 }

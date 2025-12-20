@@ -170,19 +170,32 @@ export default function StaffSidebar() {
         {/* Logout */}
         <div className="p-4 border-t border-indigo-600/50 mt-auto">
           <button
-            onClick={() => router.push("/login")}
-            className="flex items-center justify-center space-x-3 p-3 rounded-xl
-                       bg-gradient-to-r from-red-500/20 to-red-600/20
-                       hover:from-red-500/30 hover:to-red-600/30
-                       backdrop-blur-sm transition-all duration-200 w-full
-                       hover:shadow-lg group"
-          >
-            <LogOut
-              size={20}
-              className="group-hover:rotate-12 transition-transform duration-200"
-            />
-            <span className="font-medium">Logout</span>
-          </button>
+  onClick={async () => {
+    try {
+      // 1. Call the logout API you created earlier
+      const res = await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+
+      if (res.ok) {
+        // 2. Redirect to login page
+        router.push("/auth/login");
+        // 3. Optional: refresh to clear any cached data in the layout
+        router.refresh();
+      } else {
+        console.error("Logout failed on server");
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  }}
+  className="flex items-center justify-center space-x-3 p-3 rounded-xl w-full
+             bg-gradient-to-r from-red-500/20 to-red-600/20
+             hover:from-red-500/30 hover:to-red-600/30 transition "
+>
+  <LogOut size={20} />
+  <span className="font-medium">Logout</span>
+</button>
         </div>
       </aside>
     </>

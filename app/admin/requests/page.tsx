@@ -273,19 +273,7 @@ export default function AdminRequests() {
             </h1>
             <p className="text-gray-600 mt-1">Manage and approve book borrowing requests</p>
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={fetchRequests}
-              className="flex items-center gap-2 px-4 py-2 bg-white border rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Refresh
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border rounded-lg hover:bg-gray-50 transition-colors">
-              <Download className="w-4 h-4" />
-              Export
-            </button>
-          </div>
+          
         </div>
 
         {/* Stats Cards */}
@@ -294,7 +282,7 @@ export default function AdminRequests() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Total Requests</p>
-                <p className="text-2xl font-bold mt-1">{stats.total}</p>
+                <p className="text-2xl font-bold mt-1 text-pink-500">{stats.total}</p>
               </div>
               <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center">
                 <BookOpen className="w-5 h-5 text-indigo-600" />
@@ -362,13 +350,13 @@ export default function AdminRequests() {
         <div className="bg-white rounded-xl shadow-sm border p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
-            <div className="flex-1">
+            <div className="flex-1 ">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
                 <input
                   type="text"
                   placeholder="Search by book, author, or user..."
-                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 text-black py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -380,7 +368,7 @@ export default function AdminRequests() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="px-3 py-2 border text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -391,7 +379,7 @@ export default function AdminRequests() {
               <select
                 value={userTypeFilter}
                 onChange={(e) => setUserTypeFilter(e.target.value)}
-                className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="px-3 py-2 text-black border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="all">All Users</option>
                 <option value="student">Students</option>
@@ -401,7 +389,7 @@ export default function AdminRequests() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="px-3 py-2 border text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
@@ -630,7 +618,7 @@ export default function AdminRequests() {
 
       {/* Pagination (Optional) */}
       {filteredRequests.length > 0 && (
-        <div className="flex items-center justify-between mt-6">
+        <div className="flex items-center justify-between mt-6 text-black">
           <p className="text-sm text-gray-600">
             Showing {filteredRequests.length} of {requests.length} requests
           </p>

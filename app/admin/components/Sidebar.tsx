@@ -12,8 +12,10 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Sidebar() {
+  const router = useRouter(); 
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -106,10 +108,31 @@ export default function Sidebar() {
 
         {/* Footer */}
         <div className="p-4 border-t border-slate-700">
-          <button className="flex items-center gap-3 w-full px-3 py-2 rounded-xl hover:bg-red-600/20">
-            <LogOut className="text-red-400" />
-            {!collapsed && <span>Logout</span>}
-          </button>
+          <button
+  onClick={async () => {
+    try {
+      // 1. Call the logout API you created earlier
+      const res = await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+
+      if (res.ok) {
+        // 2. Redirect to login page
+        router.push("/auth/login");
+      } else {
+        console.error("Logout failed on server");
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  }}
+  className="flex items-center justify-center space-x-3 p-3 rounded-xl w-full
+             bg-gradient-to-r from-red-500/20 to-red-600/20
+             hover:from-red-500/30 hover:to-red-600/30 transition "
+>
+  <LogOut size={20} />
+  <span className="font-medium">Logout</span>
+</button>
         </div>
       </aside>
 
