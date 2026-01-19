@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { 
   User, 
   Calendar, 
+  AlertCircle,
   ChevronRight, 
   Info,
   Clock,
@@ -70,22 +71,27 @@ export default function StaffDashboard() {
                   {req.status}
                 </div>
 
-                {/* Hover Triggered Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
-                  <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                    <div className="flex items-center text-slate-300 text-xs mb-2">
-                      <User className="w-3 h-3 mr-2" />
-                      <span>{req.bookId?.author}</span>
+                {/* HOVER TRIGGER: REVEAL AUTHOR & RETURN DATE */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-8">
+                      <div className="transform translate-y-6 group-hover:translate-y-0 transition-transform duration-300">
+                        <div className="flex items-center text-slate-200 text-sm mb-2">
+                          <User className="w-4 h-4 mr-2 text-indigo-400" />
+                          <span>{req.bookId?.author}</span>
+                        </div>
+                        
+                        {req.returnDate && req.status === "approved" && (
+                          <div className="flex items-center text-rose-300 text-xs font-medium">
+                            <AlertCircle className="w-4 h-4 mr-2" />
+                            <span>Return by: {new Date(req.returnDate).toLocaleDateString()}</span>
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center text-slate-400 text-[10px] mt-4 uppercase tracking-widest font-bold">
+                          <Calendar className="w-3 h-3 mr-2" />
+                          Requested: {new Date(req.createdAt || Date.now()).toLocaleDateString()}
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center text-slate-300 text-xs">
-                      <Calendar className="w-3 h-3 mr-2" />
-                      <span>{new Date(req.createdAt).toLocaleDateString()}</span>
-                    </div>
-                    <button className="mt-4 w-full py-2 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white text-xs rounded-lg transition-colors border border-white/30">
-                      View Details
-                    </button>
-                  </div>
-                </div>
               </div>
 
               {/* Visible Text Content */}

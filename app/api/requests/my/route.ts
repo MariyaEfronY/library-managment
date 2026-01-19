@@ -8,7 +8,6 @@ import { getAuthUser } from "@/lib/getAuthUser";
 export async function GET(req: NextRequest) {
   try {
     await connectToDB();
-
     const authUser = getAuthUser(req);
     if (!authUser) {
       return NextResponse.json(
@@ -28,7 +27,7 @@ export async function GET(req: NextRequest) {
       })
       .sort({ createdAt: -1 })
       .lean();
-
+console.log(requests)
     return NextResponse.json({
       success: true,
       requests: requests || [],

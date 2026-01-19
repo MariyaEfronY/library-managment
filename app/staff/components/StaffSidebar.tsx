@@ -179,7 +179,7 @@ export default function StaffSidebar() {
 
       if (res.ok) {
         // 2. Redirect to login page
-        router.push("/auth/login");
+        router.push("/");
         // 3. Optional: refresh to clear any cached data in the layout
         router.refresh();
       } else {

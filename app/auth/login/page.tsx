@@ -1,184 +1,223 @@
 "use client";
 
-import { useState } from "react";
-import { Eye, EyeOff, LogIn } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Eye, EyeOff, LockKeyhole, User } from "lucide-react";
 
 export default function LoginPage() {
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
- // Replace your existing handleLogin logic with this fix:
-const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError("");
-  setSuccess("");
-  setIsLoading(true);
+  const logoRef = useRef<HTMLDivElement>(null);
 
-  try {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, password }),
-    });
+  // ✅ Zoom in / zoom out animation (SAFE)
+  useEffect(() => {
+    if (!logoRef.current) return;
 
-    const data = await res.json();
+    const animation = logoRef.current.animate(
+      [
+        { transform: "scale(1)" },
+        { transform: "scale(1.08)" },
+        { transform: "scale(1)" },
+      ],
+      {
+        duration: 3500,
+        iterations: Infinity,
+        easing: "ease-in-out",
+      }
+    );
 
-    if (!res.ok) {
-      // FIX: Your API uses 'message', but frontend looks for 'error'
-      setError(data.message || "Login failed"); 
+    return () => animation.cancel();
+  }, []);
+
+  // ✅ Login handler (correct scope)
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.message || "Invalid credentials");
+        setIsLoading(false);
+        return;
+      }
+
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      setTimeout(() => {
+        window.location.href =
+          data.user.role === "student"
+            ? "/student"
+            : data.user.role === "staff"
+            ? "/staff"
+            : "/admin";
+      }, 800);
+    } catch {
+      setError("Network error");
       setIsLoading(false);
-      return;
     }
+  };
 
-    setSuccess("Login successful!");
-    // The token is now in a HttpOnly cookie, so we don't need to manually store it 
-    localStorage.setItem("user", JSON.stringify(data.user));
-    
-    setTimeout(() => {
-      if (data.user.role === "student") window.location.href = "/student";
-      else if (data.user.role === "staff") window.location.href = "/staff";
-      else window.location.href = "/admin";
-    }, 1000);
-  } catch (err) {
-    setError("Something went wrong");
-    setIsLoading(false);
-  }
-};
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full mb-4 shadow-lg">
-            <LogIn className="h-8 w-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h1>
-          <p className="text-gray-500 text-sm">Sign in to access your account</p>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] px-2 sm:px-4">
+      <div
+        className="
+          w-full max-w-[800px]
+          flex flex-row
+          bg-white
+          rounded-xl sm:rounded-2xl
+          shadow-[0_12px_32px_rgba(0,0,0,0.05)]
+          overflow-hidden
+          border border-slate-100
+          min-h-[300px] sm:min-h-[350px]
+        "
+      >
+        {/* LEFT BRAND PANEL */}
+        <div className="w-[28%] sm:w-[45%] bg-gradient-to-br from-[#1e293b] to-[#0f172a] flex items-center justify-center relative">
+          <div className="absolute inset-0 bg-blue-500/5"></div>
 
-        {/* Login Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl">
-              <p className="text-red-600 text-sm text-center font-medium">{error}</p>
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-100 rounded-xl">
-              <p className="text-green-600 text-sm text-center font-medium">{success}</p>
-            </div>
-          )}
-
-          <form className="space-y-6" onSubmit={handleLogin}>
-            {/* ID Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Roll Number / Staff ID / Admin ID
-              </label>
-              <div className="relative group">
-                <input
-                  type="text"
-                  placeholder="Enter your ID"
-                  value={id}
-                  onChange={(e) => setId(e.target.value)}
-                  required
-                  className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 
-                           rounded-xl focus:outline-none focus:border-blue-500 
-                           focus:ring-2 focus:ring-blue-200 transition-all duration-300
-                           placeholder:text-gray-400 text-gray-700
-                           group-hover:border-gray-300"
+          <div className="relative z-10 flex flex-col items-center">
+            {/* LOGO WITH ZOOM ANIMATION */}
+            <div
+              ref={logoRef}
+              className="
+                relative
+                p-[3px]
+                rounded-2xl sm:rounded-3xl
+                bg-gradient-to-br from-indigo-500/60 via-blue-500/40 to-cyan-400/40
+                shadow-[0_0_40px_rgba(99,102,241,0.35)]
+              "
+            >
+              <div
+                className="
+                  rounded-xl sm:rounded-2xl
+                  bg-white/5
+                  backdrop-blur-md
+                  border border-white/20
+                  p-3 sm:p-6
+                  flex items-center justify-center
+                "
+              >
+                <img
+                  src="/login-card-bg.png"
+                  alt="Logo"
+                  className="w-10 h-10 sm:w-44 sm:h-44 object-contain drop-shadow-xl"
                 />
-                <div className="absolute inset-0 rounded-xl ring-0 ring-blue-200 group-focus-within:ring-4 transition-all duration-300 pointer-events-none"></div>
               </div>
             </div>
 
-            {/* Password Field */}
+            {/* DESKTOP TEXT ONLY */}
+            <div className="hidden sm:block text-center mt-6">
+              <h2 className="text-white text-xl font-semibold tracking-wide">
+                Smart Library
+              </h2>
+              <p className="text-slate-400 text-sm mt-1 tracking-widest">
+                SJC
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT FORM PANEL */}
+        <div className="w-[72%] sm:w-[55%] flex flex-col justify-center px-4 py-5 sm:px-14 sm:py-14 bg-white">
+          <div className="mb-4 sm:mb-10">
+            <h1 className="text-lg sm:text-3xl font-bold text-slate-900">
+              Welcome Back
+            </h1>
+            <p className="hidden sm:block text-slate-500 mt-1 text-sm">
+              Enter your credentials to continue
+            </p>
+          </div>
+
+          {error && (
+            <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-xs sm:text-sm text-red-600">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="space-y-3 sm:space-y-6">
+            {/* USER ID */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-[10px] sm:text-[13px] font-semibold text-slate-700 mb-1">
+                User ID
+              </label>
+              <div className="relative">
+                <User
+                  size={14}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                />
+                <input
+                  type="text"
+                  value={id}
+                  onChange={(e) => setId(e.target.value)}
+                  required
+                  placeholder="ID"
+                  className="text-gray-950 w-full pl-9 pr-3 py-2 sm:py-3 rounded-lg sm:rounded-xl
+                             bg-slate-50 border border-slate-200 text-xs sm:text-sm
+                             focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500"
+                />
+              </div>
+            </div>
+
+            {/* PASSWORD */}
+            <div>
+              <label className="block text-[10px] sm:text-[13px] font-semibold text-slate-700 mb-1">
                 Password
               </label>
-              <div className="relative group">
+              <div className="relative">
+                <LockKeyhole
+                  size={14}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                />
                 <input
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 
-                           rounded-xl focus:outline-none focus:border-blue-500 
-                           focus:ring-2 focus:ring-blue-200 transition-all duration-300
-                           placeholder:text-gray-400 text-gray-700 pr-12
-                           group-hover:border-gray-300"
+                  placeholder="••••"
+                  className="text-gray-950 w-full pl-9 pr-9 py-2 sm:py-3 rounded-lg sm:rounded-xl
+                             bg-slate-50 border border-slate-200 text-xs sm:text-sm
+                             focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 
-                           text-gray-400 hover:text-gray-600 transition-colors p-1.5
-                           hover:bg-gray-100 rounded-lg"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
+                  {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
-                <div className="absolute inset-0 rounded-xl ring-0 ring-blue-200 group-focus-within:ring-4 transition-all duration-300 pointer-events-none"></div>
               </div>
             </div>
 
-            {/* Submit Button */}
+            {/* BUTTON */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 
-                       text-white py-3.5 px-4 rounded-xl font-semibold 
-                       hover:from-blue-700 hover:to-indigo-700 
-                       focus:outline-none focus:ring-4 focus:ring-blue-200
-                       transition-all duration-300 transform hover:-translate-y-0.5
-                       disabled:opacity-70 disabled:cursor-not-allowed 
-                       disabled:hover:transform-none shadow-lg hover:shadow-xl
-                       flex items-center justify-center gap-2"
+              className="
+                w-full bg-indigo-600 hover:bg-indigo-700
+                text-white font-semibold
+                py-2.5 sm:py-4
+                rounded-lg sm:rounded-xl
+                text-xs sm:text-base
+                shadow-md shadow-indigo-200
+                transition active:scale-[0.97]
+                disabled:opacity-70
+              "
             >
-              {isLoading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Signing in...
-                </>
-              ) : (
-                <>
-                  <LogIn className="h-5 w-5" />
-                  Login
-                </>
-              )}
+              {isLoading ? "Checking..." : "Sign In"}
             </button>
           </form>
-
-          {/* Footer */}
-          <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-            <p className="text-gray-600 text-sm">
-              Don't have an account?{" "}
-              <a
-                href="/auth/register"
-                className="text-blue-600 hover:text-blue-800 font-semibold 
-                         hover:underline transition-colors"
-              >
-                Register here
-              </a>
-            </p>
-          </div>
-        </div>
-
-        {/* Demo Hint */}
-        <div className="mt-6 text-center">
-          <p className="text-xs text-gray-400">
-            Use your ID and password to login
-          </p>
         </div>
       </div>
     </div>

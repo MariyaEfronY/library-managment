@@ -26,11 +26,9 @@ export default function StaffRequests() {
       setIsLoading(true);
       try {
         // 2. Fetch both books and staff's personal requests in parallel
-        const [booksRes, myReqsRes] = await Promise.all([
-          fetch("/api/books"),
-          fetch("/api/requests/my") // Ensure this endpoint returns staff's requests
-        ]);
-
+        const booksRes = await fetch("/api/books");
+        const myReqsRes = await fetch("/api/requests/my");
+        console.log(myReqsRes)
         const booksData = await booksRes.json();
         const myReqsData = await myReqsRes.json();
 
