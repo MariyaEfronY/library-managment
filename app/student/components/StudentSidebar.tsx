@@ -58,7 +58,7 @@ export default function StudentSidebar() {
             <img src="/login-card-bg.png" alt="Logo" className="w-full h-full object-contain" />
           </div>
           <div className="text-center">
-            <h2 className="text-white text-xs font-bold tracking-[0.2em] uppercase">Student Hub</h2>
+            <h2 className="text-white text-xs font-bold tracking-[0.2em] uppercase">Student Portal</h2>
             <div className="h-1 w-8 bg-indigo-500 mx-auto mt-2 rounded-full" />
           </div>
         </div>

@@ -46,11 +46,14 @@ export default function StaffSidebar() {
         ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}>
         {/* LOGO */}
-        <div className="p-8 flex flex-col items-center border-b border-slate-800/50">
-          <div className="w-16 h-16 bg-white/5 rounded-2xl p-2 border border-white/10 mb-3">
+        <div className="p-8 flex flex-col items-center">
+          <div className="w-16 h-16 bg-white/5 rounded-2xl p-2 border border-white/10 shadow-2xl mb-4 group hover:border-indigo-500/50 transition-colors">
             <img src="/login-card-bg.png" alt="Logo" className="w-full h-full object-contain" />
           </div>
-          <h2 className="text-white text-[11px] font-black tracking-[0.25em] uppercase text-center">Staff Control</h2>
+          <div className="text-center">
+            <h2 className="text-white text-xs font-bold tracking-[0.2em] uppercase">Staff Portal</h2>
+            <div className="h-1 w-8 bg-indigo-500 mx-auto mt-2 rounded-full" />
+          </div>
         </div>
 
         {/* NAV */}
