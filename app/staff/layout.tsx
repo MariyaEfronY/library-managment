@@ -6,16 +6,25 @@ export default function StaffLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="h-screen overflow-hidden bg-gray-100">
-      <div className="flex h-full">
-        {/* Sidebar (NO SCROLL) */}
-        <aside className="hidden lg:block w-64 shrink-0">
-          <StaffSidebar />
-        </aside>
+    <div className="h-screen overflow-hidden bg-[#f8fafc]">
+      <div className="flex h-full relative">
+        
+        {/* SIDEBAR COMPONENT 
+            We remove the 'hidden' wrapper so that the mobile 
+            burger button inside StaffSidebar stays visible.
+        */}
+        <StaffSidebar />
 
-        {/* Page Content (ONLY THIS SCROLLS) */}
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
+        {/* PAGE CONTENT */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-10">
+          {/* This spacer ensures content doesn't get hidden under 
+              the mobile menu button on small screens 
+          */}
+          <div className="lg:hidden h-14" /> 
+          
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>

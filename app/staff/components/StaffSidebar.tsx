@@ -2,200 +2,85 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  ClipboardList,
-  BookOpen,
-  LogOut,
-  Menu,
-  X,
-  ChevronRight,
+import { 
+  LayoutDashboard, ClipboardList, BookOpen, LogOut, Menu, X, ChevronRight, Settings 
 } from "lucide-react";
 
 export default function StaffSidebar() {
   const router = useRouter();
   const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
 
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // Close mobile menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (
-        isMobileMenuOpen &&
-        !target.closest(".sidebar") &&
-        !target.closest(".mobile-menu-button")
-      ) {
-        setIsMobileMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, [isMobileMenuOpen]);
+  useEffect(() => setIsOpen(false), [pathname]);
 
   const menuItems = [
-    {
-      label: "Dashboard",
-      icon: <LayoutDashboard size={20} />,
-      path: "/staff",
-    },
-    {
-      label: "Book Requests",
-      icon: <ClipboardList size={20} />,
-      path: "/staff/requests",
-    },
-    {
-      label: "Request Status",
-      icon: <BookOpen size={20} />,
-      path: "/staff/request-status",
-    },
+    { label: "Overview", icon: <LayoutDashboard size={18} />, path: "/staff" },
+    { label: "Active Requests", icon: <ClipboardList size={18} />, path: "/staff/requests" },
+    { label: "History Log", icon: <BookOpen size={18} />, path: "/staff/request-status" },
   ];
 
-  const handleNavigation = (path: string) => {
-    router.push(path);
-    setIsMobileMenuOpen(false);
+  const handleLogout = async () => {
+    try {
+      const res = await fetch("/api/auth/logout", { method: "POST" });
+      if (res.ok) { router.push("/"); router.refresh(); }
+    } catch (err) { console.error(err); }
   };
 
   return (
     <>
-      {/* Mobile Menu Button */}
+      {/* BURGER BUTTON */}
       <button
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="mobile-menu-button lg:hidden fixed top-4 left-4 z-50 p-3 rounded-lg
-                   bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg"
+        onClick={() => setIsOpen(!isOpen)}
+        className="lg:hidden fixed top-4 left-4 z-[60] p-3 rounded-2xl bg-[#0f172a] text-white shadow-xl border border-white/10"
       >
-        {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        {isOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
-      {/* Mobile Overlay */}
-      <div
-        className={`
-          lg:hidden fixed inset-0 bg-black z-40 transition-opacity duration-300
-          ${isMobileMenuOpen ? "opacity-50" : "opacity-0 pointer-events-none"}
-        `}
-        onClick={() => setIsMobileMenuOpen(false)}
-      />
+      {/* OVERLAY */}
+      {isOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[50] lg:hidden" onClick={() => setIsOpen(false)} />
+      )}
 
-      {/* Sidebar */}
-<aside
-  className={`
-    sidebar
-    w-64
-    h-full
-    bg-gradient-to-b from-indigo-700 to-purple-800 text-white
-    flex flex-col
-    fixed lg:static
-    top-0 left-0
-    z-50
-    transition-transform duration-300
-    ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-  `}
->
-
-
-
-
-        {/* Header */}
-        <div className="p-6 border-b border-indigo-600/50">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-sm">
-              <BookOpen size={28} />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold">Staff Panel</h2>
-              <p className="text-sm text-indigo-200">Library Management</p>
-            </div>
+      <aside className={`
+        fixed top-0 left-0 z-[55] h-screen w-64 bg-[#0f172a] border-r border-slate-800 flex flex-col transition-transform duration-300
+        ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+      `}>
+        {/* LOGO */}
+        <div className="p-8 flex flex-col items-center border-b border-slate-800/50">
+          <div className="w-16 h-16 bg-white/5 rounded-2xl p-2 border border-white/10 mb-3">
+            <img src="/login-card-bg.png" alt="Logo" className="w-full h-full object-contain" />
           </div>
+          <h2 className="text-white text-[11px] font-black tracking-[0.25em] uppercase text-center">Staff Control</h2>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1 mt-4 overflow-y-auto">
+        {/* NAV */}
+        <nav className="flex-1 px-4 py-6 space-y-1">
           {menuItems.map((item) => {
-            const isActive = pathname === item.path;
-
+            const active = pathname === item.path;
             return (
               <button
                 key={item.path}
-                onClick={() => handleNavigation(item.path)}
-                className={`
-                  flex items-center justify-between w-full p-3 rounded-xl
-                  transition-all duration-200 group
-                  ${
-                    isActive
-                      ? "bg-white/20 shadow-lg backdrop-blur-sm"
-                      : "hover:bg-white/10 hover:backdrop-blur-sm"
-                  }
-                `}
+                onClick={() => router.push(item.path)}
+                className={`w-full flex items-center justify-between p-3 rounded-xl transition-all
+                  ${active ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/20" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}
               >
-                <div className="flex items-center space-x-3">
-                  <div
-                    className={`
-                      p-2 rounded-lg transition-colors duration-200
-                      ${
-                        isActive
-                          ? "bg-white text-indigo-700"
-                          : "bg-white/10 text-white group-hover:bg-white/20"
-                      }
-                    `}
-                  >
-                    {item.icon}
-                  </div>
-                  <span
-                    className={`font-medium ${
-                      isActive ? "text-white" : "text-gray-100"
-                    }`}
-                  >
-                    {item.label}
-                  </span>
+                <div className="flex items-center gap-3">
+                  {item.icon}
+                  <span className="text-sm font-semibold">{item.label}</span>
                 </div>
-
-                <ChevronRight
-                  size={18}
-                  className={`
-                    transition-transform duration-200
-                    ${
-                      isActive
-                        ? "text-white rotate-90"
-                        : "text-white/50 group-hover:text-white"
-                    }
-                  `}
-                />
               </button>
             );
           })}
         </nav>
 
-        {/* Logout */}
-        <div className="p-4 border-t border-indigo-600/50 mt-auto">
+        {/* LOGOUT */}
+        <div className="p-4 bg-slate-900/50 border-t border-slate-800">
           <button
-  onClick={async () => {
-    try {
-      // 1. Call the logout API you created earlier
-      const res = await fetch("/api/auth/logout", {
-        method: "POST",
-      });
-
-      if (res.ok) {
-        // 2. Redirect to login page
-        router.push("/");
-        // 3. Optional: refresh to clear any cached data in the layout
-        router.refresh();
-      } else {
-        console.error("Logout failed on server");
-      }
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  }}
-  className="flex items-center justify-center space-x-3 p-3 rounded-xl w-full
-             bg-gradient-to-r from-red-500/20 to-red-600/20
-             hover:from-red-500/30 hover:to-red-600/30 transition "
->
-  <LogOut size={20} />
-  <span className="font-medium">Logout</span>
-</button>
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-3 py-3 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all font-bold text-xs"
+          >
+            <LogOut size={16} /> SIGN OUT
+          </button>
         </div>
       </aside>
     </>
