@@ -1,20 +1,21 @@
 "use client";
+
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Search, 
   BookOpen, 
-  User, 
-  Calendar, 
   Loader2, 
   CheckCircle, 
-  AlertCircle,
   Clock,
-  XCircle
+  ArrowRight,
+  Filter,
+  Sparkles,
+  Bookmark
 } from "lucide-react";
 
 export default function StaffRequests() {
   const [books, setBooks] = useState<any[]>([]);
-  // 1. New state to track request statuses for the logged-in staff
   const [myRequestStatuses, setMyRequestStatuses] = useState<Record<string, string>>({});
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -25,17 +26,16 @@ export default function StaffRequests() {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        // 2. Fetch both books and staff's personal requests in parallel
-        const booksRes = await fetch("/api/books");
-        const myReqsRes = await fetch("/api/requests/my");
-        console.log(myReqsRes)
+        const [booksRes, myReqsRes] = await Promise.all([
+          fetch("/api/books"),
+          fetch("/api/requests/my")
+        ]);
         const booksData = await booksRes.json();
         const myReqsData = await myReqsRes.json();
 
         if (booksData.success) setBooks(booksData.books || []);
         
         if (myReqsData.success) {
-          // 3. Create a map of BookID -> Current Status (pending/approved/rejected)
           const statusMap: Record<string, string> = {};
           myReqsData.requests.forEach((req: any) => {
             if (req.bookId) {
@@ -68,14 +68,8 @@ export default function StaffRequests() {
         alert(data.message);
         return;
       }
-
-      // 4. Update UI immediately to show 'Pending'
       setMyRequestStatuses(prev => ({ ...prev, [bookId]: "pending" }));
-      
-      // Update local copy count
       setBooks(prev => prev.map(b => b._id === bookId ? { ...b, availableCopies: b.availableCopies - 1 } : b));
-
-      alert("Staff request submitted successfully!");
     } catch (err) {
       alert("Failed to submit request.");
     } finally {
@@ -91,96 +85,165 @@ export default function StaffRequests() {
   });
 
   return (
-    <div className="p-4 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Staff Portal: Book Request</h1>
-          <p className="text-gray-600">Borrow resources for your teaching requirements.</p>
-        </header>
-
-        {/* Search Bar (Same as Student for consistency) */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-8 flex flex-col lg:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Search by title or author..."
-              className="w-full pl-12 pr-4 py-3 bg-gray-50 border rounded-xl text-black focus:ring-2 focus:ring-indigo-500 outline-none"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+    <div className="min-h-screen bg-[#f8fafc] pb-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 lg:pt-12">
+        
+        {/* HEADER SECTION */}
+        <motion.header 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-10"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <span className="bg-indigo-600 p-1.5 rounded-lg text-white">
+              <BookOpen size={18} />
+            </span>
+            <span className="text-indigo-600 font-bold text-xs uppercase tracking-widest">Academic Resources</span>
           </div>
-          <select 
-            className="p-3 border rounded-xl bg-white text-black min-w-[150px]"
-            onChange={(e) => setFilter(e.target.value as any)}
-          >
-            <option value="all">All Books</option>
-            <option value="available">Available</option>
-          </select>
-        </div>
+          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            Staff Library Portal
+          </h1>
+          <p className="text-slate-500 mt-2 max-w-2xl text-sm sm:text-base leading-relaxed">
+            Reserve teaching materials and institutional resources. Requests are prioritized for active curriculum requirements.
+          </p>
+        </motion.header>
 
+        {/* SEARCH & FILTER BAR */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="sticky top-4 z-30 mb-12"
+        >
+          <div className="bg-white/80 backdrop-blur-xl border border-white shadow-2xl shadow-slate-200/50 rounded-[24px] p-3 sm:p-4 flex flex-col md:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+              <input
+                type="text"
+                placeholder="Search by title, author, or ISBN..."
+                className="w-full pl-12 pr-4 py-3 sm:py-4 bg-slate-50 border-none rounded-2xl text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex gap-2">
+              <div className="relative flex-1 md:flex-none">
+                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
+                <select 
+                  className="w-full md:w-[180px] pl-11 pr-4 py-3 sm:py-4 bg-slate-50 border-none rounded-2xl text-slate-700 font-bold text-sm appearance-none focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
+                  onChange={(e) => setFilter(e.target.value as any)}
+                >
+                  <option value="all">All Catalog</option>
+                  <option value="available">Available Now</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* CONTENT GRID */}
         {isLoading ? (
-          <div className="flex justify-center py-20"><Loader2 className="animate-spin text-indigo-600" size={48} /></div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredBooks.map((book) => {
-              const status = myRequestStatuses[book._id];
-              const isOutOfStock = book.availableCopies <= 0;
-
-              return (
-                <div key={book._id} className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
-                  {/* Book Image */}
-                  <div className="h-48 bg-gray-100 relative">
-                    {book.imageUrl && <img src={book.imageUrl} className="w-full h-full object-cover" alt={book.title} />}
-                    {status && (
-                       <div className="absolute top-2 right-2">
-                        <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${
-                          status === 'approved' ? 'bg-green-500 text-white' : 
-                          status === 'rejected' ? 'bg-red-500 text-white' : 'bg-amber-500 text-white'
-                        }`}>
-                          {status}
-                        </span>
-                       </div>
-                    )}
-                  </div>
-
-                  <div className="p-5 flex-1 flex flex-col">
-                    <h3 className="font-bold text-gray-900 mb-1 line-clamp-1">{book.title}</h3>
-                    <p className="text-gray-500 text-sm mb-4">{book.author}</p>
-                    
-                    <div className="mt-auto">
-                      {/* 5. Logic-aware Button */}
-                      <button
-                        onClick={() => requestBook(book._id)}
-                         disabled={loadingId === book._id || isOutOfStock || !!(status && status !== "rejected")}
-                        className={`w-full py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${
-                          status === "approved" ? "bg-green-100 text-green-700 cursor-default" :
-                          status === "pending" ? "bg-amber-100 text-amber-700 cursor-default" :
-                          status === "rejected" ? "bg-red-600 text-white hover:bg-red-700" :
-                          isOutOfStock ? "bg-gray-100 text-gray-400 cursor-not-allowed" :
-                          "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm active:scale-95"
-                        }`}
-                      >
-                        {loadingId === book._id ? (
-                          <Loader2 className="animate-spin" size={18} />
-                        ) : status === "approved" ? (
-                          <><CheckCircle size={18} /> Approved</>
-                        ) : status === "pending" ? (
-                          <><Clock size={18} /> Pending</>
-                        ) : status === "rejected" ? (
-                          "Try Again"
-                        ) : isOutOfStock ? (
-                          "Out of Stock"
-                        ) : (
-                          "Request as Staff"
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="flex flex-col items-center justify-center py-32 space-y-4">
+            <Loader2 className="animate-spin text-indigo-600" size={48} />
+            <p className="text-slate-400 font-bold animate-pulse text-sm uppercase tracking-widest">Indexing Library...</p>
           </div>
+        ) : (
+          <motion.div 
+            layout
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8"
+          >
+            <AnimatePresence mode='popLayout'>
+              {filteredBooks.map((book, index) => {
+                const status = myRequestStatuses[book._id];
+                const isOutOfStock = book.availableCopies <= 0;
+
+                return (
+                  <motion.div
+                    key={book._id}
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="group bg-white rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-500 flex flex-col h-full overflow-hidden"
+                  >
+                    {/* Book Visual */}
+                    <div className="aspect-[4/5] bg-slate-100 relative overflow-hidden">
+                      {book.imageUrl ? (
+                        <img 
+                          src={book.imageUrl} 
+                          className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" 
+                          alt={book.title} 
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-300">
+                          <BookOpen size={48} strokeWidth={1} />
+                        </div>
+                      )}
+                      
+                      {/* Floating Status Badge */}
+                      <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
+                        {status && (
+                          <motion.span 
+                            initial={{ x: 20 }} animate={{ x: 0 }}
+                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-tighter shadow-lg backdrop-blur-md ${
+                              status === 'approved' ? 'bg-emerald-500 text-white' : 
+                              status === 'rejected' ? 'bg-rose-500 text-white' : 'bg-amber-500 text-white'
+                            }`}
+                          >
+                            {status}
+                          </motion.span>
+                        )}
+                        <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-tighter backdrop-blur-md border ${
+                          isOutOfStock ? 'bg-slate-800 text-white' : 'bg-white/90 text-slate-900 border-white'
+                        }`}>
+                          {book.availableCopies} Copies Left
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Book Info */}
+                    <div className="p-6 flex-1 flex flex-col">
+                      <div className="mb-4">
+                        <h3 className="font-black text-slate-900 text-lg leading-tight line-clamp-2 group-hover:text-indigo-600 transition-colors">
+                          {book.title}
+                        </h3>
+                        <p className="text-slate-400 text-sm mt-1 font-medium">{book.author}</p>
+                      </div>
+
+                      <div className="mt-auto pt-4 border-t border-slate-50">
+                        <button
+                          onClick={() => requestBook(book._id)}
+                          disabled={loadingId === book._id || isOutOfStock || !!(status && status !== "rejected")}
+                          className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                            status === "approved" ? "bg-emerald-50 text-emerald-600 cursor-default" :
+                            status === "pending" ? "bg-amber-50 text-amber-600 cursor-default" :
+                            status === "rejected" ? "bg-rose-600 text-white hover:bg-rose-700 shadow-rose-200 shadow-lg" :
+                            isOutOfStock ? "bg-slate-100 text-slate-400 cursor-not-allowed" :
+                            "bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-indigo-200 hover:shadow-xl active:scale-95"
+                          }`}
+                        >
+                          {loadingId === book._id ? (
+                            <Loader2 className="animate-spin" size={18} />
+                          ) : status === "approved" ? (
+                            <><CheckCircle size={16} /> Secured</>
+                          ) : status === "pending" ? (
+                            <><Clock size={16} /> In Review</>
+                          ) : status === "rejected" ? (
+                            "Re-Submit Request"
+                          ) : isOutOfStock ? (
+                            "Unavailable"
+                          ) : (
+                            <span className="flex items-center gap-2">Request Access <ArrowRight size={14} /></span>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </motion.div>
         )}
       </div>
     </div>
