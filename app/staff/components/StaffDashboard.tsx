@@ -72,7 +72,7 @@ export default function StaffDashboard() {
             </div>
             <div>
               <h2 className="text-slate-900 font-bold">Staff Overview</h2>
-              <p className="text-xs text-slate-400 uppercase tracking-widest">Admin verified</p>
+              <p className="text-xs text-slate-400 uppercase tracking-widest">Staff Details</p>
             </div>
           </div>
 
