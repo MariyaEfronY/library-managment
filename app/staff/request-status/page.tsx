@@ -1,19 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
-  User, 
   Calendar, 
   AlertCircle,
-  ChevronRight, 
-  Info,
   Clock,
   CheckCircle,
   XCircle,
-  BookMarked
+  BookMarked,
+  ArrowUpRight,
+  User
 } from "lucide-react";
 
-export default function StaffDashboard() {
+export default function ReadingRoom() {
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,98 +26,110 @@ export default function StaffDashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  const getStatusStyle = (status: string) => {
+  const getStatusConfig = (status: string) => {
     switch (status) {
-      case "approved": return "bg-emerald-500/90 text-white";
-      case "rejected": return "bg-rose-500/90 text-white";
-      default: return "bg-amber-500/90 text-white";
+      case "approved": 
+        return { label: "Approved", icon: <CheckCircle size={10} />, class: "bg-emerald-500 text-white" };
+      case "rejected": 
+        return { label: "Declined", icon: <XCircle size={10} />, class: "bg-rose-500 text-white" };
+      default: 
+        return { label: "Pending", icon: <Clock size={10} />, class: "bg-amber-500 text-white" };
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-8">
-      {/* Page Header */}
-      <div className="max-w-6xl mx-auto mb-12 flex justify-between items-end">
-        <div>
-          <h1 className="text-4xl font-serif font-medium text-slate-900">Reading Room</h1>
-          <p className="text-slate-500 mt-2 font-light">Manage your personal book collection and active requests.</p>
+    <div className="min-h-screen bg-[#f8fafc] pb-20 lg:ml-64 transition-all duration-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-16 lg:pt-12">
+        
+        {/* HEADER */}
+        <div className="mb-10">
+          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter">
+            Reading Room
+          </h1>
+          <p className="text-slate-500 mt-1 text-sm font-medium">
+            Your personal library activity and active loans.
+          </p>
         </div>
-        <div className="text-right hidden md:block">
-          <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Total Requests</span>
-          <p className="text-2xl font-semibold text-indigo-600">{requests.length}</p>
-        </div>
-      </div>
 
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-        </div>
-      ) : (
-        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {requests.map((req) => (
-            <div key={req._id} className="group relative flex flex-col bg-transparent">
-              {/* Image & Overlay Container */}
-              <div className="relative aspect-[2/3] overflow-hidden rounded-2xl shadow-lg bg-slate-200 transition-all duration-500 group-hover:shadow-2xl group-hover:-translate-y-2">
-                
-                {/* Book Image */}
-                <img
-                  src={req.bookId?.imageUrl || "https://via.placeholder.com/400x600?text=No+Cover"}
-                  alt={req.bookId?.title}
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
+        {loading ? (
+          <div className="flex justify-center py-20"><Clock className="animate-spin text-indigo-600" /></div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
+            <AnimatePresence>
+              {requests.map((req, index) => {
+                const status = getStatusConfig(req.status);
+                const isApproved = req.status === "approved";
 
-                {/* Status Floating Badge */}
-                <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter backdrop-blur-md shadow-sm ${getStatusStyle(req.status)}`}>
-                  {req.status}
-                </div>
+                return (
+                  <motion.div
+                    key={req._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="group flex flex-col"
+                  >
+                    {/* BOOK COVER CONTAINER */}
+                    <div className="relative aspect-[2/3] rounded-[24px] overflow-hidden bg-white shadow-md group-hover:shadow-xl transition-all duration-500">
+                      <img
+                        src={req.bookId?.imageUrl || "https://via.placeholder.com/400x600"}
+                        alt={req.bookId?.title}
+                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
 
-                {/* HOVER TRIGGER: REVEAL AUTHOR & RETURN DATE */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-8">
-                      <div className="transform translate-y-6 group-hover:translate-y-0 transition-transform duration-300">
-                        <div className="flex items-center text-slate-200 text-sm mb-2">
-                          <User className="w-4 h-4 mr-2 text-indigo-400" />
-                          <span>{req.bookId?.author}</span>
-                        </div>
-                        
-                        {req.returnDate && req.status === "approved" && (
-                          <div className="flex items-center text-rose-300 text-xs font-medium">
-                            <AlertCircle className="w-4 h-4 mr-2" />
-                            <span>Return by: {new Date(req.returnDate).toLocaleDateString()}</span>
+                      {/* TOP BADGE: STATUS (Always Visible) */}
+                      <div className="absolute top-3 left-3 flex gap-2">
+                        <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg backdrop-blur-md ${status.class}`}>
+                          {status.icon} {status.label}
+                        </span>
+                      </div>
+
+                      {/* BOTTOM BADGE: RETURN DATE (Always Visible on Mobile/Desktop if Approved) */}
+                      {isApproved && req.returnDate && (
+                        <div className="absolute bottom-3 left-3 right-3">
+                          <div className="bg-white/90 backdrop-blur-md border border-white p-2 rounded-xl flex items-center justify-between shadow-lg">
+                            <div className="flex items-center gap-2">
+                              <div className="p-1 bg-rose-100 text-rose-600 rounded-md">
+                                <Calendar size={12} />
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[8px] text-slate-400 font-bold uppercase leading-none mb-0.5">Return Date</span>
+                                <span className="text-[10px] text-slate-900 font-black leading-none">
+                                  {new Date(req.returnDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                                </span>
+                              </div>
+                            </div>
+                            <AlertCircle size={12} className="text-rose-500 animate-pulse" />
                           </div>
-                        )}
-                        
-                        <div className="flex items-center text-slate-400 text-[10px] mt-4 uppercase tracking-widest font-bold">
-                          <Calendar className="w-3 h-3 mr-2" />
-                          Requested: {new Date(req.createdAt || Date.now()).toLocaleDateString()}
                         </div>
+                      )}
+
+                      {/* DESKTOP HOVER OVERLAY (Additional Details) */}
+                      <div className="absolute inset-0 bg-indigo-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                         <div className="bg-white p-2 rounded-full text-indigo-600 transform scale-0 group-hover:scale-100 transition-transform">
+                            <ArrowUpRight size={20} />
+                         </div>
                       </div>
                     </div>
-              </div>
 
-              {/* Visible Text Content */}
-              <div className="mt-4 px-1">
-                <h3 className="text-slate-900 font-medium text-lg truncate leading-tight">
-                  {req.bookId?.title}
-                </h3>
-                {/* Author Name visible even without hover but in a subtler way */}
-                <p className="text-slate-500 text-sm mt-1 flex items-center">
-                  <span className="w-4 h-px bg-slate-300 mr-2"></span>
-                  {req.bookId?.author}
-                </p>
-              </div>
-            </div>
-          ))}
-
-          {/* Empty State Card */}
-          {!loading && requests.length === 0 && (
-            <div className="col-span-full py-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-3xl bg-white/50">
-              <BookMarked className="w-12 h-12 text-slate-300 mb-4" />
-              <p className="text-slate-500">Your library shelf is empty.</p>
-              <button className="mt-4 text-indigo-600 font-medium hover:underline">Browse Catalog</button>
-            </div>
-          )}
-        </div>
-      )}
+                    {/* TEXT CONTENT */}
+                    <div className="mt-4 px-1">
+                      <h3 className="text-slate-900 font-bold text-base truncate mb-0.5">
+                        {req.bookId?.title}
+                      </h3>
+                      <div className="flex items-center justify-between">
+                        <p className="text-slate-500 text-xs font-medium flex items-center gap-1">
+                          <User size={10} /> {req.bookId?.author}
+                        </p>
+                        <span className="text-[10px] text-slate-300 font-mono">#{req._id.slice(-4)}</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
