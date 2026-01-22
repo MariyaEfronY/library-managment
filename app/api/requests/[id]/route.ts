@@ -120,7 +120,7 @@ export const PATCH = async (
             request.returnDate = undefined;
         }
         
-        // Save the final request status change
+        // Save the final request status changea
         await request.save({ session });
 
         // 3. Commit Transaction
