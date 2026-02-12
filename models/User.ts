@@ -8,6 +8,8 @@ export interface IUser extends Document {
   rollNumber?: string;
   staffId?: string;
   adminId?: string;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -22,9 +24,11 @@ const UserSchema = new Schema<IUser>(
     },
     rollNumber: { type: String, sparse: true },
     staffId: { type: String, sparse: true },
-    adminId: { type: String, sparse: true }
+    adminId: { type: String, sparse: true },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 UserSchema.index({ rollNumber: 1 }, { unique: true, sparse: true });

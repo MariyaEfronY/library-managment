@@ -44,11 +44,15 @@ interface RequestedBy {
 
 interface RequestItem {
   _id: string;
-  bookId?: Book;          // 👈 populated object
+  bookId?: Book;
   requestedBy?: RequestedBy;
   status: "pending" | "approved" | "rejected";
   requestDate: string;
   returnDate?: string;
+  actualReturnDate?: string; // New
+  returned?: boolean;        // New
+  fineAmount?: number;       // New
+  finePaid?: boolean;        // New
   updatedAt?: string;
 }
 
@@ -79,40 +83,44 @@ export default function AdminRequests() {
   const [activeRequestId, setActiveRequestId] = useState<string | null>(null);
   const [tempReturnDate, setTempReturnDate] = useState("");
 
+  //Return Date and PayAmount
+  const [isProcessingAction, setIsProcessingAction] = useState<string | null>(null);
+
+
   const fetchRequests = async () => {
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const res = await fetch("/api/requests", {
-      cache: "no-store",
-    });
+      const res = await fetch("/api/requests", {
+        cache: "no-store",
+      });
 
-    if (!res.ok) {
-      throw new Error("Failed to fetch requests");
+      if (!res.ok) {
+        throw new Error("Failed to fetch requests");
+      }
+
+      const data = await res.json();
+      console.log("API DATA:", data);
+
+
+      // ✅ HANDLE BOTH API RESPONSE SHAPES
+      const requestsData = data.requests ?? data;
+
+      setRequests(requestsData);
+      setFilteredRequests(requestsData);
+      setError(null);
+    } catch (err: any) {
+      console.error("Fetch error:", err);
+      setError(err.message || "Something went wrong");
+    } finally {
+      // 🔑 THIS WAS NEVER REACHED BEFORE
+      setLoading(false);
     }
-
-    const data = await res.json();
-    console.log("API DATA:", data);
-
-
-    // ✅ HANDLE BOTH API RESPONSE SHAPES
-    const requestsData = data.requests ?? data;
-
-    setRequests(requestsData);
-    setFilteredRequests(requestsData);
-    setError(null);
-  } catch (err: any) {
-    console.error("Fetch error:", err);
-    setError(err.message || "Something went wrong");
-  } finally {
-    // 🔑 THIS WAS NEVER REACHED BEFORE
-    setLoading(false);
-  }
-};
+  };
 
   useEffect(() => {
     fetchRequests();
-    
+
     // Set default return date (14 days from now)
     const defaultDate = new Date();
     defaultDate.setDate(defaultDate.getDate() + 14);
@@ -126,7 +134,7 @@ export default function AdminRequests() {
     // Apply search filter
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
-      result = result.filter(req => 
+      result = result.filter(req =>
         req.bookId?.title?.toLowerCase().includes(searchLower) ||
         req.bookId?.author?.toLowerCase().includes(searchLower) ||
         req.requestedBy?.name?.toLowerCase().includes(searchLower) ||
@@ -162,6 +170,60 @@ export default function AdminRequests() {
 
     setFilteredRequests(result);
   }, [requests, searchTerm, statusFilter, userTypeFilter, sortBy]);
+
+  const handleReturn = async (id: string) => {
+    if (!window.confirm("Confirm book return?")) return;
+
+    setIsProcessingAction(id);
+    try {
+      const res = await fetch(`/api/requests/return`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ issueId: id }), // Send 'issueId' to match API
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert(`Success! Fine: $${data.fineAmount}`);
+        fetchRequests(); // Refresh the UI
+      } else {
+        console.log("Server Error Message:", data.message);
+        alert(data.message);
+      }
+    } catch (err) {
+      alert("Network error");
+    } finally {
+      setIsProcessingAction(null);
+    }
+  };
+
+  const handlePayFine = async (id: string) => {
+    try {
+      const res = await fetch(`/api/requests/pay-fine`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ issueId: id }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert("Fine marked as paid");
+        fetchRequests();
+      }
+    } catch (err) {
+      alert("Error processing payment");
+    }
+  };
+
+  const calculateDaysLate = (dueDate: string | Date, actualReturnDate?: string | Date) => {
+    const due = new Date(dueDate);
+    const finish = actualReturnDate ? new Date(actualReturnDate) : new Date();
+
+    if (finish <= due) return 0;
+
+    const diffTime = Math.abs(finish.getTime() - due.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
 
   const updateStatus = async (id: string, status: "approved" | "rejected") => {
     let returnDate = null;
@@ -231,16 +293,16 @@ export default function AdminRequests() {
 
   const stats = getRequestStats();
 
- if (loading) {
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-        <p className="mt-4 text-black">Loading requests...</p>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-black">Loading requests...</p>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
 
   if (error) {
@@ -273,7 +335,7 @@ export default function AdminRequests() {
             </h1>
             <p className="text-gray-600 mt-1">Manage and approve book borrowing requests</p>
           </div>
-          
+
         </div>
 
         {/* Stats Cards */}
@@ -420,206 +482,215 @@ export default function AdminRequests() {
                 <tr>
                   <th className="text-left p-4 font-semibold text-gray-700">Book Details</th>
                   <th className="text-left p-4 font-semibold text-gray-700">User Details</th>
-                  <th className="text-left p-4 font-semibold text-gray-700">Date</th>
                   <th className="text-left p-4 font-semibold text-gray-700">Status</th>
+                  <th className="text-left p-4 font-semibold text-gray-700">Date</th>
                   <th className="text-left p-4 font-semibold text-gray-700">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredRequests.map((req) => (
-  <React.Fragment key={req._id}>
-    <tr className="border-b hover:bg-gray-50 transition-colors">
-      <td className="p-4">
-        <div className="flex items-start gap-3">
-          {req.bookId?.imageUrl ? (
-  <img
-    src={req.bookId.imageUrl}
-    alt={req.bookId?.title || "Book"}
-    className="w-12 h-16 object-cover rounded"
-  />
-) : (
-  <div className="w-12 h-16 bg-gray-100 rounded flex items-center justify-center">
-    <BookOpen className="w-6 h-6 text-gray-400" />
-  </div>
-)}
-          <div>
-           <p className="font-semibold text-gray-900 line-clamp-1">
-  {req.bookId?.title ?? "Unknown Book"}
-</p>
+                  <React.Fragment key={req._id}>
+                    <tr className="border-b hover:bg-gray-50 transition-colors">
+                      <td className="p-4">
+                        <div className="flex items-start gap-3">
+                          {req.bookId?.imageUrl ? (
+                            <img
+                              src={req.bookId.imageUrl}
+                              alt={req.bookId?.title || "Book"}
+                              className="w-12 h-16 object-cover rounded"
+                            />
+                          ) : (
+                            <div className="w-12 h-16 bg-gray-100 rounded flex items-center justify-center">
+                              <BookOpen className="w-6 h-6 text-gray-400" />
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-semibold text-gray-900 line-clamp-1">
+                              {req.bookId?.title ?? "Unknown Book"}
+                            </p>
 
-<p className="text-sm text-gray-600">
-  by {req.bookId?.author ?? "Unknown Author"}
-</p>
+                            <p className="text-sm text-gray-600">
+                              by {req.bookId?.author ?? "Unknown Author"}
+                            </p>
 
-<p className="text-xs text-gray-500 mt-1">
-  Copies: {req.bookId?.availableCopies ?? "N/A"}
-</p>
-          </div>
-        </div>
-      </td>
-      <td className="p-4">
-        <div className="flex items-center gap-2 mb-1">
-          <User className="w-4 h-4 text-gray-400" />
-          <span className="font-medium text-black">{req.requestedBy?.name}</span>
-          <span className={`text-xs px-2 py-0.5 rounded-full ${
-            req.requestedBy?.role === "student" 
-              ? "bg-blue-100 text-blue-800" 
-              : "bg-purple-100 text-purple-800"
-          }`}>
-            {req.requestedBy?.role}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Mail className="w-3 h-3" />
-          {req.requestedBy?.email}
-        </div>
-        {req.requestedBy?.rollNumber && (
-          <p className="text-xs text-gray-500 mt-1">
-            Roll No: {req.requestedBy.rollNumber}
-          </p>
-        )}
-        {req.requestedBy?.staffId && (
-          <p className="text-xs text-gray-500 mt-1">
-            Staff ID: {req.requestedBy.staffId}
-          </p>
-        )}
-      </td>
-      <td className="p-4">
-        <div className="space-y-1">
-          <p className="text-sm">
-            <span className="text-gray-600">Requested:</span>
-            <span className="ml-2 font-medium text-green-500">
-              {formatDate(req.requestDate)}
-            </span>
-          </p>
-          {req.returnDate && (
-            <p className="text-sm">
-              <span className="text-gray-600">Return:</span>
-              <span className="ml-2 font-medium text-red-600">
-                {formatDate(req.returnDate)}
-              </span>
-            </p>
-          )}
-        </div>
-      </td>
-      <td className="p-4">
-        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(req.status)}`}>
-          {getStatusIcon(req.status)}
-          {req.status.charAt(0).toUpperCase() + req.status.slice(1)}
-        </span>
-      </td>
-      <td className="p-4">
-        <div className="flex items-center gap-2">
-          {req.status === "pending" && activeRequestId === req._id ? (
-            <div className="flex flex-col gap-2 bg-gray-50 p-3 rounded-lg">
-              <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-xl px-3 py-2 shadow-sm hover:border-gray-400 transition">
-  <Calendar className="w-4 h-4 text-gray-600" />
+                            <p className="text-xs text-gray-500 mt-1">
+                              Copies: {req.bookId?.availableCopies ?? "N/A"}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <User className="w-4 h-4 text-gray-400" />
+                          <span className="font-medium text-black">{req.requestedBy?.name}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${req.requestedBy?.role === "student"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-purple-100 text-purple-800"
+                            }`}>
+                            {req.requestedBy?.role}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Mail className="w-3 h-3" />
+                          {req.requestedBy?.email}
+                        </div>
+                        {req.requestedBy?.rollNumber && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Roll No: {req.requestedBy.rollNumber}
+                          </p>
+                        )}
+                        {req.requestedBy?.staffId && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Staff ID: {req.requestedBy.staffId}
+                          </p>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex flex-col gap-2 min-w-[140px]">
 
-  <input
-    type="date"
-    value={tempReturnDate}
-    onChange={(e) => setTempReturnDate(e.target.value)}
-    min={new Date().toISOString().split("T")[0]}
-    className="
-      bg-transparent
-      outline-none
-      text-sm
-      text-black
-      placeholder-gray-500
-      cursor-pointer
-      focus:ring-0
-    "
-  />
-</div>
+                          {/* PHASE 1: PENDING - Same as your current code */}
+                          {req.status === "pending" && activeRequestId === req._id ? (
+                            <div className="flex flex-col gap-2 bg-gray-50 p-2 rounded border">
+                              <input
+                                type="date"
+                                value={tempReturnDate}
+                                onChange={(e) => setTempReturnDate(e.target.value)}
+                                className="text-xs p-1 border rounded"
+                              />
+                              <div className="flex gap-1">
+                                <button onClick={() => updateStatus(req._id, "approved")} className="bg-green-600 text-white flex-1 py-1 rounded text-[10px] font-bold">CONFIRM</button>
+                                <button onClick={() => setActiveRequestId(null)} className="bg-gray-400 text-white px-2 py-1 rounded text-[10px]">X</button>
+                              </div>
+                            </div>
+                          ) : req.status === "pending" ? (
+                            <div className="flex gap-2">
+                              <button onClick={() => setActiveRequestId(req._id)} className="flex-1 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg">APPROVE</button>
+                              <button onClick={() => updateStatus(req._id, "rejected")} className="px-3 py-1.5 bg-red-100 text-red-600 text-xs font-bold rounded-lg">REJECT</button>
+                            </div>
+                          ) : null}
 
-              <div className="flex gap-2">
-                <button
-                  onClick={() => updateStatus(req._id, "approved")}
-                  className="flex-1 px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors"
-                >
-                  Confirm
-                </button>
-                <button
-                  onClick={() => setActiveRequestId(null)}
-                  className="px-3 py-1.5 bg-gray-400 text-white text-sm font-medium rounded hover:bg-gray-500 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : req.status === "pending" ? (
-            <div className="flex gap-2">
-              <button
-                onClick={() => setActiveRequestId(req._id)}
-                className="px-4 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
-              >
-                Approve
-              </button>
-              <button
-                onClick={() => updateStatus(req._id, "rejected")}
-                className="px-4 py-1.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Reject
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setExpandedRequest(expandedRequest === req._id ? null : req._id)}
-              className="px-4 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1"
-            >
-              <Eye className="w-4 h-4" />
-              Details
-              {expandedRequest === req._id ? (
-                <ChevronUp className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
-            </button>
-          )}
-        </div>
-      </td>
-    </tr>
-    
-    {/* Expanded Details */}
-    {expandedRequest === req._id && (
-      <tr>
-        <td colSpan={5} className="p-4 bg-gray-50 border-b">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white p-4 rounded-lg border">
-              <h4 className="font-semibold text-gray-900 mb-2">Book Information</h4>
-              <div className="space-y-2 text-sm">
-                <p className="text-gray-600"><span className="text-black">Title:</span>  {req.bookId?.title}</p>
-                <p className="text-gray-600"><span className="text-black">Author:</span> {req.bookId?.author}</p>
-                <p className="text-gray-600"><span className="text-black">Book Id:</span> {req.bookId?.bookId || "N/A"}</p>
-                <p className="text-gray-600"><span className="text-black">Category:</span> {req.bookId?.category || "N/A"}</p>
-              </div>
-            </div>
-            <div className="bg-white p-4 rounded-lg border">
-              <h4 className="font-semibold text-gray-900 mb-2">User Information</h4>
-              <div className="space-y-2 text-sm">
-                <p className="text-gray-600"><span className="text-black">Name:</span> {req.requestedBy?.name}</p>
-                <p className="text-gray-600"><span className="text-black">Email:</span> {req.requestedBy?.email}</p>
-                <p className="text-gray-600"><span className="text-black">Role:</span> {req.requestedBy?.role}</p>
-                <p className="text-gray-600"><span className="text-black">Contact:</span> {req.requestedBy?.contact || "N/A"}</p>
-              </div>
-            </div>
-            <div className="bg-white p-4 rounded-lg border">
-              <h4 className="font-semibold text-gray-900 mb-2">Request Details</h4>
-              <div className="space-y-2 text-sm">
-                <p className="text-gray-600"><span className="text-black">Request ID:</span> {req._id}</p>
-                <p className="text-gray-600"><span className="text-black">Request Date:</span> {formatDate(req.requestDate)}</p>
-                <p className="text-gray-600"><span className="text-black">Status Updated:</span> {formatDate(req.updatedAt)}</p>
-                {req.returnDate && (
-                  <p className="text-gray-600"><span className="text-black">Return Date:</span> {formatDate(req.returnDate)}</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </td>
-      </tr>
-    )}
-  </React.Fragment>
-))}
+                          {/* PHASE 2: BORROWED - Show Return Button */}
+                          {req.status === "approved" && !req.returned && (
+                            <button
+                              disabled={isProcessingAction === req._id}
+                              onClick={() => handleReturn(req._id)}
+                              className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                              <RefreshCw className={`w-3 h-3 ${isProcessingAction === req._id ? "animate-spin" : ""}`} />
+                              {isProcessingAction === req._id ? "SAVING..." : "RETURN BOOK"}
+                            </button>
+                          )}
+
+                          {/* PHASE 3: RETURNED WITH FINE - Show Pay Button */}
+                          {req.returned && req.fineAmount! > 0 && !req.finePaid && (
+                            <button
+                              disabled={isProcessingAction === req._id}
+                              onClick={() => handlePayFine(req._id)}
+                              className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-2"
+                            >
+                              {isProcessingAction === req._id ? (
+                                <RefreshCw className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <AlertCircle className="w-3 h-3" />
+                              )}
+                              PAY FINE (${req.fineAmount})
+                            </button>
+                          )}
+
+
+                          {/* PHASE 4: COMPLETED - Show Details */}
+                          {(req.status === "rejected" || (req.returned && (req.fineAmount === 0 || req.finePaid))) && (
+                            <button
+                              onClick={() => setExpandedRequest(expandedRequest === req._id ? null : req._id)}
+                              className="w-full py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-1"
+                            >
+                              <Eye className="w-3 h-3" />
+                              {expandedRequest === req._id ? "HIDE" : "DETAILS"}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="space-y-1">
+                          <p className="text-sm">
+                            <span className="text-gray-600">Requested:</span>
+                            <span className="ml-2 font-medium text-gray-900">{formatDate(req.requestDate)}</span>
+                          </p>
+                          {req.returnDate && (
+                            <p className="text-sm">
+                              <span className="text-gray-600">Due:</span>
+                              <span className={`ml-2 font-bold ${!req.returned && new Date(req.returnDate) < new Date() ? "text-red-600" : "text-gray-900"}`}>
+                                {formatDate(req.returnDate)}
+                                {!req.returned && new Date(req.returnDate) < new Date() && " (OVERDUE)"}
+                              </span>
+                            </p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        {req.returnDate ? (
+                          <div className="text-sm">
+                            {calculateDaysLate(req.returnDate, req.actualReturnDate) > 0 ? (
+                              <div className="flex flex-col">
+                                <span className="text-red-600 font-bold flex items-center gap-1">
+                                  <AlertCircle className="w-3 h-3" />
+                                  {calculateDaysLate(req.returnDate, req.actualReturnDate)} Days Late
+                                </span>
+                                <span className="text-gray-500 text-xs">
+                                  Fine: ${req.fineAmount || 0}
+                                  {req.finePaid ? " (Paid)" : " (Unpaid)"}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-green-600 text-xs font-medium">On Time</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xs">--</span>
+                        )}
+                      </td>
+                    </tr>
+
+                    {/* Expanded Details */}
+                    {expandedRequest === req._id && (
+                      <tr>
+                        <td colSpan={5} className="p-4 bg-gray-50 border-b">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-white p-4 rounded-lg border">
+                              <h4 className="font-semibold text-gray-900 mb-2">Book Information</h4>
+                              <div className="space-y-2 text-sm">
+                                <p className="text-gray-600"><span className="text-black">Title:</span>  {req.bookId?.title}</p>
+                                <p className="text-gray-600"><span className="text-black">Author:</span> {req.bookId?.author}</p>
+                                <p className="text-gray-600"><span className="text-black">Book Id:</span> {req.bookId?.bookId || "N/A"}</p>
+                                <p className="text-gray-600"><span className="text-black">Category:</span> {req.bookId?.category || "N/A"}</p>
+                              </div>
+                            </div>
+                            <div className="bg-white p-4 rounded-lg border">
+                              <h4 className="font-semibold text-gray-900 mb-2">User Information</h4>
+                              <div className="space-y-2 text-sm">
+                                <p className="text-gray-600"><span className="text-black">Name:</span> {req.requestedBy?.name}</p>
+                                <p className="text-gray-600"><span className="text-black">Email:</span> {req.requestedBy?.email}</p>
+                                <p className="text-gray-600"><span className="text-black">Role:</span> {req.requestedBy?.role}</p>
+                                <p className="text-gray-600"><span className="text-black">Contact:</span> {req.requestedBy?.contact || "N/A"}</p>
+                              </div>
+                            </div>
+                            <div className="bg-white p-4 rounded-lg border">
+                              <h4 className="font-semibold text-gray-900 mb-2">Request Details</h4>
+                              <div className="space-y-2 text-sm">
+                                <p className="text-gray-600"><span className="text-black">Request ID:</span> {req._id}</p>
+                                <p className="text-gray-600"><span className="text-black">Request Date:</span> {formatDate(req.requestDate)}</p>
+                                <p className="text-gray-600"><span className="text-black">Status Updated:</span> {formatDate(req.updatedAt)}</p>
+                                {req.returnDate && (
+                                  <p className="text-gray-600"><span className="text-black">Return Date:</span> {formatDate(req.returnDate)}</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
               </tbody>
             </table>
           </div>

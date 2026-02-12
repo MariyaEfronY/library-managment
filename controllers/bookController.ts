@@ -2,6 +2,107 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDB } from "@/lib/mongodb";
 import Book from "@/models/Books";
 import cloudinary from "@/lib/cloudinary";
+import IssueRecord from "@/models/IssueRecord";
+
+// controllers/issueController.ts
+
+export const payFine = async (req: NextRequest) => {
+  try {
+    await connectToDB();
+    const { issueId } = await req.json();
+
+    if (!issueId) {
+      return NextResponse.json(
+        { success: false, message: "Issue ID is required" },
+        { status: 400 },
+      );
+    }
+
+    const record = await IssueRecord.findById(issueId);
+
+    if (!record) {
+      return NextResponse.json(
+        { success: false, message: "Record not found" },
+        { status: 404 },
+      );
+    }
+
+    if (record.fineAmount === 0) {
+      return NextResponse.json(
+        { success: false, message: "No fine exists for this record" },
+        { status: 400 },
+      );
+    }
+
+    // Update the payment status
+    record.finePaid = true;
+    await record.save();
+
+    return NextResponse.json({
+      success: true,
+      message: "Fine marked as paid successfully",
+      record,
+    });
+  } catch (err: any) {
+    return NextResponse.json(
+      { success: false, message: err.message },
+      { status: 500 },
+    );
+  }
+};
+
+export const returnBook = async (req: NextRequest) => {
+  try {
+    await connectToDB();
+    const { issueId } = await req.json();
+
+    const record = await IssueRecord.findById(issueId);
+    if (!record || record.returned) {
+      return NextResponse.json(
+        { success: false, message: "Invalid or already returned record" },
+        { status: 400 },
+      );
+    }
+
+    // --- Overdue Logic ---
+    const today = new Date();
+    const dueDate = new Date(record.returnDate);
+    let fineAmount = 0;
+    const finePerDay = 5; // Set your currency amount here
+
+    if (today > dueDate) {
+      // Calculate difference in milliseconds and convert to days
+      const diffTime = Math.abs(today.getTime() - dueDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      fineAmount = diffDays * finePerDay;
+    }
+
+    // Update Issue Record
+    record.returned = true;
+    // record.actualReturnDate = today; // Optional: add this to your schema to track performance
+    await record.save();
+
+    // Update Book Inventory
+    await Book.findByIdAndUpdate(record.bookId, {
+      $inc: { availableCopies: 1 },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message:
+        fineAmount > 0
+          ? `Book returned with a fine of $${fineAmount}`
+          : "Book returned on time",
+      overdueDays: fineAmount > 0 ? fineAmount / finePerDay : 0,
+      fineAmount,
+    });
+  } catch (err: any) {
+    return NextResponse.json(
+      { success: false, message: err.message },
+      { status: 500 },
+    );
+  }
+};
 
 export const addBook = async (req: NextRequest) => {
   try {
@@ -19,14 +120,14 @@ export const addBook = async (req: NextRequest) => {
     if (!bookId || !title || !author || !category || !status)
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
 
     const existing = await Book.findOne({ bookId });
     if (existing)
       return NextResponse.json(
         { success: false, message: "Book ID already exists" },
-        { status: 400 }
+        { status: 400 },
       );
 
     let imageUrl = "";
@@ -36,7 +137,7 @@ export const addBook = async (req: NextRequest) => {
 
       const upload = await cloudinary.uploader.upload(
         `data:image/jpeg;base64,${base64}`,
-        { folder: "library_books" }
+        { folder: "library_books" },
       );
 
       imageUrl = upload.secure_url;
@@ -54,7 +155,7 @@ export const addBook = async (req: NextRequest) => {
 
     return NextResponse.json(
       { success: true, message: "Book added", book },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json({ success: false, message: err.message });
@@ -80,7 +181,7 @@ export const getSingleBook = async (bookId: string) => {
     if (!book)
       return NextResponse.json(
         { success: false, message: "Book not found" },
-        { status: 404 }
+        { status: 404 },
       );
 
     return NextResponse.json({ success: true, book });
@@ -109,14 +210,22 @@ export const updateBook = async (req: NextRequest, bookId: string) => {
         image: formData.get("image") as unknown as File,
       };
     } else {
-      return NextResponse.json({
-        success: false,
-        message: 'Content-Type must be "multipart/form-data" or "application/json"',
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            'Content-Type must be "multipart/form-data" or "application/json"',
+        },
+        { status: 400 },
+      );
     }
 
     const book = await Book.findOne({ bookId });
-    if (!book) return NextResponse.json({ success: false, message: "Book not found" }, { status: 404 });
+    if (!book)
+      return NextResponse.json(
+        { success: false, message: "Book not found" },
+        { status: 404 },
+      );
 
     // Update fields
     if (data.title) book.title = data.title;
@@ -127,10 +236,12 @@ export const updateBook = async (req: NextRequest, bookId: string) => {
 
     // Update image if provided
     if (data.image) {
-      const base64 = Buffer.from(await data.image.arrayBuffer()).toString("base64");
+      const base64 = Buffer.from(await data.image.arrayBuffer()).toString(
+        "base64",
+      );
       const upload = await cloudinary.uploader.upload(
         `data:image/jpeg;base64,${base64}`,
-        { folder: "library_books" }
+        { folder: "library_books" },
       );
       book.imageUrl = upload.secure_url;
     }
@@ -139,11 +250,12 @@ export const updateBook = async (req: NextRequest, bookId: string) => {
 
     return NextResponse.json({ success: true, message: "Book updated", book });
   } catch (err: any) {
-    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: err.message },
+      { status: 500 },
+    );
   }
 };
-
-
 
 export const deleteBook = async (bookId: string) => {
   try {
@@ -154,7 +266,7 @@ export const deleteBook = async (bookId: string) => {
     if (!deleted)
       return NextResponse.json(
         { success: false, message: "Book not found" },
-        { status: 404 }
+        { status: 404 },
       );
 
     return NextResponse.json({

@@ -6,7 +6,12 @@ export interface IRequest extends Document {
   bookId: mongoose.Types.ObjectId;
   status: "pending" | "approved" | "rejected";
   requestDate: Date;
-  returnDate?: Date; // ✅ ALREADY ADDED
+  returnDate?: Date;
+  // --- NEW FIELDS TO ADD ---
+  returned: boolean;
+  actualReturnDate?: Date;
+  fineAmount: number;
+  finePaid: boolean;
 }
 
 const RequestSchema = new Schema<IRequest>(
@@ -16,30 +21,42 @@ const RequestSchema = new Schema<IRequest>(
       ref: "User",
       required: true,
     },
-
     requestedRole: {
       type: String,
       enum: ["student", "staff"],
       required: true,
     },
-
     bookId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Book",
       required: true,
     },
-
     status: {
       type: String,
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
-
     requestDate: { type: Date, default: Date.now },
+    returnDate: { type: Date },
 
-    returnDate: { type: Date }, // ✅ ALREADY ADDED
+    // ✅ ADD THESE FIELDS BELOW
+    returned: {
+      type: Boolean,
+      default: false,
+    },
+    actualReturnDate: {
+      type: Date,
+    },
+    fineAmount: {
+      type: Number,
+      default: 0,
+    },
+    finePaid: {
+      type: Boolean,
+      default: false,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.models.Request ||

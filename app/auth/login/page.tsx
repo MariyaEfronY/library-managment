@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Eye, EyeOff, LockKeyhole, User } from "lucide-react";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [id, setId] = useState("");
@@ -60,8 +61,8 @@ export default function LoginPage() {
           data.user.role === "student"
             ? "/student"
             : data.user.role === "staff"
-            ? "/staff"
-            : "/admin";
+              ? "/staff"
+              : "/admin";
       }, 800);
     } catch {
       setError("Network error");
@@ -190,6 +191,14 @@ export default function LoginPage() {
                              bg-slate-50 border border-slate-200 text-xs sm:text-sm
                              focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500"
                 />
+                <div className="flex justify-end mt-2">
+                  <Link
+                    href="/auth/forgot-password"
+                    className="text-sm text-blue-600 hover:underline"
+                  >
+                    Forgot Password?
+                  </Link>
+                </div>
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}

@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     if (!id || !password) {
       return NextResponse.json(
         { success: false, message: "ID and password required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { success: false, message: "Invalid ID" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     if (!isMatch) {
       return NextResponse.json(
         { success: false, message: "Incorrect password" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     return NextResponse.json(
       { success: false, message: err.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
