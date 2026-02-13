@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { UserPlus, Eye, EyeOff } from "lucide-react";
+import { UserPlus, Eye, EyeOff, Phone } from "lucide-react";
 
 export default function RegisterPage() {
   const [role, setRole] = useState("student");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rollNumber, setRollNumber] = useState("");
@@ -22,7 +23,7 @@ export default function RegisterPage() {
     setSuccess("");
     setIsLoading(true);
 
-    const body: any = { name, email, password, role };
+    const body: any = { name, phone, email, password, role };
     if (role === "student") body.rollNumber = rollNumber;
     if (role === "staff") body.staffId = staffId;
     if (role === "admin") body.adminId = adminId;
@@ -48,6 +49,8 @@ export default function RegisterPage() {
       setIsLoading(false);
     }
   };
+
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-green-50 p-4">
@@ -120,6 +123,33 @@ export default function RegisterPage() {
               </div>
             </div>
 
+            {/* Phone Number Field */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-bold text-slate-700 ml-1">
+                Phone Number <span className="text-xs font-normal text-slate-400">(10 digits)</span>
+              </label>
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors">
+                  <Phone size={18} />
+                </div>
+                <input
+                  type="tel" // Use "tel" for better mobile keyboard support
+                  placeholder="+91 9876543210"
+                  value={phone}
+                  onChange={(e) => {
+                    // LIMITATION LOGIC:
+                    // 1. Remove any non-numeric characters
+                    const value = e.target.value.replace(/\D/g, "");
+                    // 2. Limit length to 10 digits
+                    if (value.length <= 10) {
+                      setPhone(value);
+                    }
+                  }}
+                  required
+                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 font-medium focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all placeholder:text-slate-300"
+                />
+              </div>
+            </div>
             {/* Password Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
