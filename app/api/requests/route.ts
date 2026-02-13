@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDB } from "@/lib/mongodb";
 import Request from "@/models/Request";
 import Book from "@/models/Books";
-import User from "@/models/User"; 
+import User from "@/models/User";
 import { getAuthUser } from "@/lib/getAuthUser";
 
 export async function POST(req: NextRequest) {
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     if (!authUser) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     if (!bookId) {
       return NextResponse.json(
         { success: false, message: "Book ID required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -29,24 +29,34 @@ export async function POST(req: NextRequest) {
     const existingRequest = await Request.findOne({
       requestedBy: authUser.id,
       bookId: bookId,
-      status: { $in: ["pending", "approved"] }
+      status: { $in: ["pending", "approved"] },
     });
 
     if (existingRequest) {
-      const msg = existingRequest.status === "pending" 
-        ? "You already have a pending request for this book." 
-        : "You already have this book approved/borrowed.";
-      return NextResponse.json({ success: false, message: msg }, { status: 400 });
+      const msg =
+        existingRequest.status === "pending"
+          ? "You already have a pending request for this book."
+          : "You already have this book approved/borrowed.";
+      return NextResponse.json(
+        { success: false, message: msg },
+        { status: 400 },
+      );
     }
 
     // 2. Verify book exists and is available
     const book = await Book.findById(bookId);
     if (!book) {
-      return NextResponse.json({ success: false, message: "Book not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: "Book not found" },
+        { status: 404 },
+      );
     }
 
     if (book.availableCopies === 0) {
-      return NextResponse.json({ success: false, message: "Book not available" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Book not available" },
+        { status: 400 },
+      );
     }
 
     // 3. Create the request
@@ -64,7 +74,10 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: any) {
     console.error("REQUEST_POST_ERROR:", err);
-    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: err.message },
+      { status: 500 },
+    );
   }
 }
 export async function GET() {
@@ -80,8 +93,8 @@ export async function GET() {
       })
       .populate({
         path: "requestedBy",
-        model: "User", 
-        select: "name email role rollNumber staffId",
+        model: "User",
+        select: "name phone email role rollNumber staffId",
       })
       .lean();
 
@@ -92,8 +105,9 @@ export async function GET() {
 
     return NextResponse.json({ success: true, requests });
   } catch (err: any) {
-    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: err.message },
+      { status: 500 },
+    );
   }
 }
-
-

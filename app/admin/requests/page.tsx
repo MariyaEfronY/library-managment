@@ -36,6 +36,7 @@ interface RequestedBy {
   _id: string;
   name?: string;
   email?: string;
+  phone?: string | number;
   role?: "student" | "staff";
   rollNumber?: string;
   staffId?: string;
@@ -482,174 +483,150 @@ export default function AdminRequests() {
                 <tr>
                   <th className="text-left p-4 font-semibold text-gray-700">Book Details</th>
                   <th className="text-left p-4 font-semibold text-gray-700">User Details</th>
-                  <th className="text-left p-4 font-semibold text-gray-700">Status</th>
-                  <th className="text-left p-4 font-semibold text-gray-700">Date</th>
-                  <th className="text-left p-4 font-semibold text-gray-700">Actions</th>
+                  <th className="text-left p-4 font-semibold text-gray-700">Status & Actions</th>
+                  <th className="text-left p-4 font-semibold text-gray-700">Date Info</th>
+                  <th className="text-left p-4 font-semibold text-gray-700">Fine Status</th>
+                  <th className="text-center p-4 font-semibold text-gray-700">View</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredRequests.map((req) => (
                   <React.Fragment key={req._id}>
-                    <tr className="border-b hover:bg-gray-50 transition-colors">
-                      <td className="p-4">
+                    <tr className="border-b hover:bg-gray-50/80 transition-all">
+                      {/* 1. BOOK DETAILS */}
+                      <td className="p-4 align-top">
                         <div className="flex items-start gap-3">
                           {req.bookId?.imageUrl ? (
-                            <img
-                              src={req.bookId.imageUrl}
-                              alt={req.bookId?.title || "Book"}
-                              className="w-12 h-16 object-cover rounded"
-                            />
+                            <img src={req.bookId.imageUrl} alt="Book" className="w-12 h-16 object-cover rounded shadow-sm" />
                           ) : (
-                            <div className="w-12 h-16 bg-gray-100 rounded flex items-center justify-center">
-                              <BookOpen className="w-6 h-6 text-gray-400" />
+                            <div className="w-12 h-16 bg-slate-100 rounded flex items-center justify-center border border-slate-200">
+                              <BookOpen className="w-6 h-6 text-slate-400" />
                             </div>
                           )}
-                          <div>
-                            <p className="font-semibold text-gray-900 line-clamp-1">
-                              {req.bookId?.title ?? "Unknown Book"}
-                            </p>
-
-                            <p className="text-sm text-gray-600">
-                              by {req.bookId?.author ?? "Unknown Author"}
-                            </p>
-
-                            <p className="text-xs text-gray-500 mt-1">
-                              Copies: {req.bookId?.availableCopies ?? "N/A"}
-                            </p>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-slate-900 line-clamp-1">{req.bookId?.title ?? "Unknown Book"}</span>
+                            <span className="text-xs text-slate-500">by {req.bookId?.author ?? "Unknown Author"}</span>
+                            <div className="mt-2 inline-flex items-center text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                              Copies: {req.bookId?.availableCopies ?? "0"}
+                            </div>
                           </div>
                         </div>
                       </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-2 mb-1">
-                          <User className="w-4 h-4 text-gray-400" />
-                          <span className="font-medium text-black">{req.requestedBy?.name}</span>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${req.requestedBy?.role === "student"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-purple-100 text-purple-800"
-                            }`}>
-                            {req.requestedBy?.role}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Mail className="w-3 h-3" />
-                          {req.requestedBy?.email}
-                        </div>
-                        {req.requestedBy?.rollNumber && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            Roll No: {req.requestedBy.rollNumber}
-                          </p>
-                        )}
-                        {req.requestedBy?.staffId && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            Staff ID: {req.requestedBy.staffId}
-                          </p>
-                        )}
-                      </td>
-                      <td className="p-4">
-                        <div className="flex flex-col gap-2 min-w-[140px]">
 
-                          {/* PHASE 1: PENDING - Same as your current code */}
-                          {req.status === "pending" && activeRequestId === req._id ? (
-                            <div className="flex flex-col gap-2 bg-gray-50 p-2 rounded border">
+                      {/* 2. USER DETAILS */}
+                      <td className="p-4 align-top">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-slate-800">{req.requestedBy?.name}</span>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${req.requestedBy?.role === "student" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
+                              }`}>
+                              {req.requestedBy?.role}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-500 flex flex-col gap-0.5">
+                            <span className="flex items-center gap-1"><Mail size={12} /> {req.requestedBy?.email}</span>
+                            <span className="font-mono text-slate-400">ID: {req.requestedBy?.rollNumber || req.requestedBy?.staffId || "N/A"}</span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* 3. STATUS & MAIN ACTIONS */}
+                      <td className="p-4 align-top min-w-[160px]">
+                        {req.status === "pending" ? (
+                          activeRequestId === req._id ? (
+                            <div className="flex flex-col gap-2 bg-white p-2 rounded-xl border border-indigo-100 shadow-sm">
+                              <label className="text-[10px] font-bold text-indigo-600 uppercase">Set Return Date</label>
                               <input
                                 type="date"
                                 value={tempReturnDate}
                                 onChange={(e) => setTempReturnDate(e.target.value)}
-                                className="text-xs p-1 border rounded"
+                                className="text-xs p-1.5 border rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                               />
                               <div className="flex gap-1">
-                                <button onClick={() => updateStatus(req._id, "approved")} className="bg-green-600 text-white flex-1 py-1 rounded text-[10px] font-bold">CONFIRM</button>
-                                <button onClick={() => setActiveRequestId(null)} className="bg-gray-400 text-white px-2 py-1 rounded text-[10px]">X</button>
+                                <button onClick={() => updateStatus(req._id, "approved")} className="bg-emerald-600 text-white flex-1 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wider">Confirm</button>
+                                <button onClick={() => setActiveRequestId(null)} className="bg-slate-100 text-slate-400 px-2 py-1.5 rounded-md hover:bg-slate-200">X</button>
                               </div>
                             </div>
-                          ) : req.status === "pending" ? (
-                            <div className="flex gap-2">
-                              <button onClick={() => setActiveRequestId(req._id)} className="flex-1 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg">APPROVE</button>
-                              <button onClick={() => updateStatus(req._id, "rejected")} className="px-3 py-1.5 bg-red-100 text-red-600 text-xs font-bold rounded-lg">REJECT</button>
+                          ) : (
+                            <div className="flex flex-col gap-2">
+                              <button onClick={() => setActiveRequestId(req._id)} className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold rounded-lg shadow-md transition-all">APPROVE REQUEST</button>
+                              <button onClick={() => updateStatus(req._id, "rejected")} className="w-full py-2 bg-red-50 text-red-600 hover:bg-red-100 text-[11px] font-bold rounded-lg transition-all">REJECT</button>
                             </div>
-                          ) : null}
-
-                          {/* PHASE 2: BORROWED - Show Return Button */}
-                          {req.status === "approved" && !req.returned && (
-                            <button
-                              disabled={isProcessingAction === req._id}
-                              onClick={() => handleReturn(req._id)}
-                              className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-2 disabled:opacity-50"
-                            >
-                              <RefreshCw className={`w-3 h-3 ${isProcessingAction === req._id ? "animate-spin" : ""}`} />
-                              {isProcessingAction === req._id ? "SAVING..." : "RETURN BOOK"}
-                            </button>
-                          )}
-
-                          {/* PHASE 3: RETURNED WITH FINE - Show Pay Button */}
-                          {req.returned && req.fineAmount! > 0 && !req.finePaid && (
-                            <button
-                              disabled={isProcessingAction === req._id}
-                              onClick={() => handlePayFine(req._id)}
-                              className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-2"
-                            >
-                              {isProcessingAction === req._id ? (
-                                <RefreshCw className="w-3 h-3 animate-spin" />
-                              ) : (
-                                <AlertCircle className="w-3 h-3" />
-                              )}
-                              PAY FINE (${req.fineAmount})
-                            </button>
-                          )}
-
-
-                          {/* PHASE 4: COMPLETED - Show Details */}
-                          {(req.status === "rejected" || (req.returned && (req.fineAmount === 0 || req.finePaid))) && (
-                            <button
-                              onClick={() => setExpandedRequest(expandedRequest === req._id ? null : req._id)}
-                              className="w-full py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-1"
-                            >
-                              <Eye className="w-3 h-3" />
-                              {expandedRequest === req._id ? "HIDE" : "DETAILS"}
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="space-y-1">
-                          <p className="text-sm">
-                            <span className="text-gray-600">Requested:</span>
-                            <span className="ml-2 font-medium text-gray-900">{formatDate(req.requestDate)}</span>
-                          </p>
-                          {req.returnDate && (
-                            <p className="text-sm">
-                              <span className="text-gray-600">Due:</span>
-                              <span className={`ml-2 font-bold ${!req.returned && new Date(req.returnDate) < new Date() ? "text-red-600" : "text-gray-900"}`}>
-                                {formatDate(req.returnDate)}
-                                {!req.returned && new Date(req.returnDate) < new Date() && " (OVERDUE)"}
-                              </span>
-                            </p>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        {req.returnDate ? (
-                          <div className="text-sm">
-                            {calculateDaysLate(req.returnDate, req.actualReturnDate) > 0 ? (
-                              <div className="flex flex-col">
-                                <span className="text-red-600 font-bold flex items-center gap-1">
-                                  <AlertCircle className="w-3 h-3" />
-                                  {calculateDaysLate(req.returnDate, req.actualReturnDate)} Days Late
-                                </span>
-                                <span className="text-gray-500 text-xs">
-                                  Fine: ${req.fineAmount || 0}
-                                  {req.finePaid ? " (Paid)" : " (Unpaid)"}
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-green-600 text-xs font-medium">On Time</span>
-                            )}
-                          </div>
+                          )
+                        ) : req.status === "approved" && !req.returned ? (
+                          <button
+                            disabled={isProcessingAction === req._id}
+                            onClick={() => handleReturn(req._id)}
+                            className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 disabled:opacity-50"
+                          >
+                            <RefreshCw size={14} className={isProcessingAction === req._id ? "animate-spin" : ""} />
+                            Return Book
+                          </button>
+                        ) : req.returned && req.fineAmount! > 0 && !req.finePaid ? (
+                          <button
+                            disabled={isProcessingAction === req._id}
+                            onClick={() => handlePayFine(req._id)}
+                            className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-black uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 shadow-lg shadow-amber-100"
+                          >
+                            <AlertCircle size={14} />
+                            Pay ${req.fineAmount} Fine
+                          </button>
                         ) : (
-                          <span className="text-gray-400 text-xs">--</span>
+                          <div className={`text-center py-2 rounded-lg font-bold text-[11px] uppercase tracking-widest ${req.status === 'rejected' ? 'bg-red-50 text-red-500' : 'bg-slate-100 text-slate-500'
+                            }`}>
+                            {req.status === 'rejected' ? 'Rejected' : 'Completed'}
+                          </div>
                         )}
                       </td>
+
+                      {/* 4. DATES */}
+                      <td className="p-4 align-top text-xs">
+                        <div className="flex flex-col gap-2">
+                          <div>
+                            <span className="block text-[10px] text-slate-400 uppercase font-black">Requested</span>
+                            <span className="font-bold text-slate-700">{formatDate(req.requestDate)}</span>
+                          </div>
+                          {req.returnDate && (
+                            <div>
+                              <span className="block text-[10px] text-slate-400 uppercase font-black">Due Date</span>
+                              <span className={`font-bold ${!req.returned && new Date(req.returnDate) < new Date() ? "text-red-600 animate-pulse" : "text-slate-700"}`}>
+                                {formatDate(req.returnDate)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* 5. FINE CALCULATION */}
+                      <td className="p-4 align-top text-center">
+                        {req.returnDate ? (
+                          calculateDaysLate(req.returnDate, req.actualReturnDate) > 0 ? (
+                            <span className="inline-block px-3 py-1 bg-red-100 text-red-600 rounded-full text-[10px] font-black uppercase">
+                              {calculateDaysLate(req.returnDate, req.actualReturnDate)} Days Late
+                            </span>
+                          ) : (
+                            <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-600 rounded-full text-[10px] font-black uppercase">
+                              On Time
+                            </span>
+                          )
+                        ) : <span className="text-slate-300">--</span>}
+                      </td>
+
+                      {/* 6. UNIQUE DETAILS BUTTON */}
+                      <td className="p-4 align-top text-center">
+                        <button
+                          onClick={() => setExpandedRequest(expandedRequest === req._id ? null : req._id)}
+                          className={`p-2.5 rounded-full transition-all duration-300 ${expandedRequest === req._id
+                            ? "bg-slate-800 text-white rotate-180 shadow-inner"
+                            : "bg-white text-slate-400 border border-slate-200 hover:border-indigo-500 hover:text-indigo-600 shadow-sm"
+                            }`}
+                        >
+                          {expandedRequest === req._id ? <ChevronUp size={18} /> : <Eye size={18} />}
+                        </button>
+                      </td>
                     </tr>
+
+
 
                     {/* Expanded Details */}
                     {expandedRequest === req._id && (
@@ -671,7 +648,7 @@ export default function AdminRequests() {
                                 <p className="text-gray-600"><span className="text-black">Name:</span> {req.requestedBy?.name}</p>
                                 <p className="text-gray-600"><span className="text-black">Email:</span> {req.requestedBy?.email}</p>
                                 <p className="text-gray-600"><span className="text-black">Role:</span> {req.requestedBy?.role}</p>
-                                <p className="text-gray-600"><span className="text-black">Contact:</span> {req.requestedBy?.contact || "N/A"}</p>
+                                <p className="text-gray-600"><span className="text-black">Contact:</span> {req.requestedBy?.phone || "N/A"}</p>
                               </div>
                             </div>
                             <div className="bg-white p-4 rounded-lg border">
