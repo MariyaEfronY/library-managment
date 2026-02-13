@@ -2,30 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import User from "@/models/User";
 import { connectToDB } from "@/lib/mongodb";
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { transporter } from "@/lib/nodemailer";
 
 export async function POST(req: NextRequest) {
   try {
-    console.log("--- Forgot Password Process Started ---");
     await connectToDB();
-
     const { email } = await req.json();
-    console.log("Looking for user with email:", email);
+
+    // 💡 Debug: Check if env variables are loading
+    console.log("Using Email:", process.env.EMAIL_USER);
+    console.log("Password Length:", process.env.EMAIL_PASS?.length);
 
     const user = await User.findOne({ email });
-
     if (!user) {
-      console.log("❌ USER NOT FOUND in database for:", email);
-      // We still return success for security, but we know why no email was sent
       return NextResponse.json({
         success: true,
-        message: "If an account exists, a reset link has been sent.",
+        message: "Check your inbox for a reset link.",
       });
     }
-
-    console.log("✅ USER FOUND:", user.name);
 
     const resetToken = crypto.randomBytes(32).toString("hex");
     const hashedToken = crypto
@@ -36,36 +30,24 @@ export async function POST(req: NextRequest) {
     user.resetPasswordToken = hashedToken;
     user.resetPasswordExpires = new Date(Date.now() + 3600000);
     await user.save();
-    console.log("✅ Reset token saved to database");
 
-    const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password/${resetToken}`;
-    console.log("Attempting to send email via Resend to:", email);
+    const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/auth/reset-password/${resetToken}`;
 
-    // WE AWAIT THIS TO CATCH ERRORS
-    const { data, error } = await resend.emails.send({
-      from: `Smart Library <${process.env.EMAIL_FROM}>`,
+    const mailOptions = {
+      from: `"Smart Library" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: "Reset Your Password",
+      subject: "Password Reset Request",
       html: `<p>Click <a href="${resetUrl}">here</a> to reset your password.</p>`,
-    });
+    };
 
-    if (error) {
-      console.error("❌ RESEND API ERROR:", error);
-      return NextResponse.json(
-        { success: false, message: "Email service failed" },
-        { status: 500 },
-      );
-    }
+    await transporter.sendMail(mailOptions);
+    console.log("✅ Email sent successfully to:", email);
 
-    console.log("🚀 RESEND SUCCESS:", data);
-    return NextResponse.json({
-      success: true,
-      message: "Reset link sent to your email!",
-    });
+    return NextResponse.json({ success: true, message: "Reset link sent!" });
   } catch (err: any) {
-    console.error("🔥 SEVERE ERROR:", err.message);
+    console.error("❌ Mailer Error Details:", err.message);
     return NextResponse.json(
-      { success: false, message: err.message },
+      { success: false, message: "Server error" },
       { status: 500 },
     );
   }

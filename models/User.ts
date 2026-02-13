@@ -22,18 +22,17 @@ const UserSchema = new Schema<IUser>(
       enum: ["student", "staff", "admin"],
       required: true,
     },
-    rollNumber: { type: String, sparse: true },
-    staffId: { type: String, sparse: true },
-    adminId: { type: String, sparse: true },
+    // We define the uniqueness and sparse property directly here
+    rollNumber: { type: String, unique: true, sparse: true },
+    staffId: { type: String, unique: true, sparse: true },
+    adminId: { type: String, unique: true, sparse: true },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
   },
   { timestamps: true },
 );
 
-UserSchema.index({ rollNumber: 1 }, { unique: true, sparse: true });
-UserSchema.index({ staffId: 1 }, { unique: true, sparse: true });
-UserSchema.index({ adminId: 1 }, { unique: true, sparse: true });
+// ❌ REMOVED the UserSchema.index lines from here to stop the warnings
 
 export default mongoose.models.User ||
   mongoose.model<IUser>("User", UserSchema);
