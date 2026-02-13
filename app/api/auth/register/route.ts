@@ -8,11 +8,19 @@ export async function POST(req: NextRequest) {
     await connectToDB();
 
     const body = await req.json();
-    const { name, phone, email, password, role, rollNumber, staffId, adminId } =
-      body;
+    const { name, phone, email, password, role } = body;
 
-    // Email exists?
-    const exists = await User.findOne({ email });
+    // --- NORMALIZATION LOGIC ---
+    // 1. Emails should always be lowercase
+    const normalizedEmail = email?.trim().toLowerCase();
+
+    // 2. IDs should be Trimmed and Uppercased
+    const normalizedRollNumber = body.rollNumber?.trim().toUpperCase();
+    const normalizedStaffId = body.staffId?.trim().toUpperCase();
+    const normalizedAdminId = body.adminId?.trim().toUpperCase();
+
+    // Check if Email exists (using normalized version)
+    const exists = await User.findOne({ email: normalizedEmail });
     if (exists)
       return NextResponse.json(
         { error: "Email already registered" },
@@ -20,38 +28,47 @@ export async function POST(req: NextRequest) {
       );
 
     // Role validation
-    if (role === "student" && !rollNumber)
+    if (role === "student" && !normalizedRollNumber)
       return NextResponse.json(
         { error: "Roll Number is required for students" },
         { status: 400 },
       );
 
-    if (role === "staff" && !staffId)
+    if (role === "staff" && !normalizedStaffId)
       return NextResponse.json(
         { error: "Staff ID is required for staff" },
         { status: 400 },
       );
 
-    if (role === "admin" && !adminId)
+    if (role === "admin" && !normalizedAdminId)
       return NextResponse.json(
         { error: "Admin ID is required for admin" },
         { status: 400 },
       );
 
-    // Check unique IDs
-    if (rollNumber && (await User.findOne({ rollNumber })))
+    // Check unique IDs (using normalized versions)
+    if (
+      normalizedRollNumber &&
+      (await User.findOne({ rollNumber: normalizedRollNumber }))
+    )
       return NextResponse.json(
         { error: "Roll Number already exists" },
         { status: 400 },
       );
 
-    if (staffId && (await User.findOne({ staffId })))
+    if (
+      normalizedStaffId &&
+      (await User.findOne({ staffId: normalizedStaffId }))
+    )
       return NextResponse.json(
         { error: "Staff ID already exists" },
         { status: 400 },
       );
 
-    if (adminId && (await User.findOne({ adminId })))
+    if (
+      normalizedAdminId &&
+      (await User.findOne({ adminId: normalizedAdminId }))
+    )
       return NextResponse.json(
         { error: "Admin ID already exists" },
         { status: 400 },
@@ -59,15 +76,16 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Save the user with normalized data
     const newUser = await User.create({
       name,
-      email,
+      email: normalizedEmail,
       phone,
       password: hashedPassword,
       role,
-      rollNumber,
-      staffId,
-      adminId,
+      rollNumber: normalizedRollNumber,
+      staffId: normalizedStaffId,
+      adminId: normalizedAdminId,
     });
 
     return NextResponse.json(

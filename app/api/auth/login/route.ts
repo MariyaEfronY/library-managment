@@ -16,10 +16,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const user =
-      (await User.findOne({ rollNumber: id })) ||
-      (await User.findOne({ staffId: id })) ||
-      (await User.findOne({ adminId: id }));
+    // --- NORMALIZATION LOGIC ---
+    // This ensures the input matches the uppercase data stored in your DB
+    const normalizedId = id.trim().toUpperCase();
+
+    // Use $or to check all possible ID fields in a single database query
+    const user = await User.findOne({
+      $or: [
+        { rollNumber: normalizedId },
+        { staffId: normalizedId },
+        { adminId: normalizedId },
+      ],
+    });
 
     if (!user) {
       return NextResponse.json(
