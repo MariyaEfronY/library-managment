@@ -1,11 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
-import { 
-  Upload, 
-  BookOpen, 
-  User, 
-  Tag, 
-  Copy, 
+import {
+  Upload,
+  BookOpen,
+  User,
+  Tag,
+  Copy,
   ArrowLeft,
   Save
 } from "lucide-react";
@@ -59,30 +59,54 @@ export default function BookForm({ editBook, onSuccess, onCancel }: BookFormProp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return; // prevent double click
     setLoading(true);
 
-    const formData = new FormData();
-    formData.append("bookId", bookId);
-    formData.append("title", title);
-    formData.append("author", author);
-    formData.append("category", category);
-    formData.append("availableCopies", availableCopies.toString());
-    formData.append("status", status);
-    if (image) formData.append("image", image);
-
     try {
+      const formData = new FormData();
+      formData.append("bookId", bookId);
+      formData.append("title", title);
+      formData.append("author", author);
+      formData.append("category", category);
+      formData.append("availableCopies", availableCopies.toString());
+      formData.append("status", status);
+      if (image) formData.append("image", image);
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 20000); // 20s timeout protection
+
       const res = await fetch(
         editBook ? `/api/books/${bookId}` : "/api/books",
         {
           method: editBook ? "PUT" : "POST",
           body: formData,
+          signal: controller.signal,
         }
       );
+
+      clearTimeout(timeout);
+
+      if (!res.ok) {
+        throw new Error("Failed to save book");
+      }
+
       const data = await res.json();
-      alert(data.message);
-      if (data.success) onSuccess();
-    } catch (err) {
-      alert("Error occurred");
+
+      if (!data.success) {
+        throw new Error(data.message || "Something went wrong");
+      }
+
+      // small delay for smooth UX
+      setTimeout(() => {
+        onSuccess();
+      }, 500);
+
+    } catch (err: any) {
+      if (err.name === "AbortError") {
+        alert("Request timed out. Try again.");
+      } else {
+        alert(err.message || "Error occurred");
+      }
       console.error(err);
     } finally {
       setLoading(false);
@@ -234,10 +258,10 @@ export default function BookForm({ editBook, onSuccess, onCancel }: BookFormProp
                 type="button"
                 onClick={() => setStatus("valid")}
                 className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all
-                         ${status === "valid" 
-                           ? 'border-green-500 bg-green-50 text-green-700' 
-                           : 'border-gray-200 bg-gray-50 text-gray-700 hover:border-gray-300'
-                         }`}
+                         ${status === "valid"
+                    ? 'border-green-500 bg-green-50 text-green-700'
+                    : 'border-gray-200 bg-gray-50 text-gray-700 hover:border-gray-300'
+                  }`}
               >
                 <div className={`w-2 h-2 rounded-full ${status === "valid" ? 'bg-green-500' : 'bg-gray-400'}`}></div>
                 <span className="font-medium">Valid</span>
@@ -246,10 +270,10 @@ export default function BookForm({ editBook, onSuccess, onCancel }: BookFormProp
                 type="button"
                 onClick={() => setStatus("invalid")}
                 className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all
-                         ${status === "invalid" 
-                           ? 'border-red-500 bg-red-50 text-red-700' 
-                           : 'border-gray-200 bg-gray-50 text-gray-700 hover:border-gray-300'
-                         }`}
+                         ${status === "invalid"
+                    ? 'border-red-500 bg-red-50 text-red-700'
+                    : 'border-gray-200 bg-gray-50 text-gray-700 hover:border-gray-300'
+                  }`}
               >
                 <div className={`w-2 h-2 rounded-full ${status === "invalid" ? 'bg-red-500' : 'bg-gray-400'}`}></div>
                 <span className="font-medium">Invalid</span>
@@ -267,9 +291,9 @@ export default function BookForm({ editBook, onSuccess, onCancel }: BookFormProp
                             border-2 border-dashed border-gray-300 rounded-xl 
                             flex items-center justify-center overflow-hidden">
                 {imagePreview ? (
-                  <img 
-                    src={imagePreview} 
-                    alt="Preview" 
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -323,7 +347,7 @@ export default function BookForm({ editBook, onSuccess, onCancel }: BookFormProp
                 {loading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Saving...
+                    {editBook ? "Updating..." : "Adding..."}
                   </>
                 ) : (
                   <>

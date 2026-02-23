@@ -3,6 +3,7 @@ import { connectToDB } from "@/lib/mongodb";
 import Book from "@/models/Books";
 import cloudinary from "@/lib/cloudinary";
 import IssueRecord from "@/models/IssueRecord";
+import streamifier from "streamifier";
 
 // controllers/issueController.ts
 
@@ -115,32 +116,39 @@ export const addBook = async (req: NextRequest) => {
     const category = formData.get("category") as string;
     const availableCopies = Number(formData.get("availableCopies"));
     const status = formData.get("status") as string;
-    const image: File | null = formData.get("image") as unknown as File;
+    const image = formData.get("image") as File | null;
 
-    if (!bookId || !title || !author || !category || !status)
+    if (!bookId || !title || !author || !category || !status) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
         { status: 400 },
       );
+    }
 
     const existing = await Book.findOne({ bookId });
-    if (existing)
+    if (existing) {
       return NextResponse.json(
         { success: false, message: "Book ID already exists" },
         { status: 400 },
       );
+    }
 
     let imageUrl = "";
+
     if (image) {
-      const arrayBuffer = await image.arrayBuffer();
-      const base64 = Buffer.from(arrayBuffer).toString("base64");
+      const buffer = Buffer.from(await image.arrayBuffer());
 
-      const upload = await cloudinary.uploader.upload(
-        `data:image/jpeg;base64,${base64}`,
-        { folder: "library_books" },
-      );
+      imageUrl = await new Promise<string>((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: "library_books" },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result?.secure_url || "");
+          },
+        );
 
-      imageUrl = upload.secure_url;
+        streamifier.createReadStream(buffer).pipe(uploadStream);
+      });
     }
 
     const book = await Book.create({
@@ -158,7 +166,10 @@ export const addBook = async (req: NextRequest) => {
       { status: 201 },
     );
   } catch (err: any) {
-    return NextResponse.json({ success: false, message: err.message });
+    return NextResponse.json(
+      { success: false, message: err.message },
+      { status: 500 },
+    );
   }
 };
 

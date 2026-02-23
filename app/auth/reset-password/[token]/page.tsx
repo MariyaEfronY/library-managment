@@ -17,6 +17,10 @@ export default function ResetPasswordPage() {
         e.preventDefault();
         setError("");
 
+        if (!token) {
+            return setError("Invalid reset link");
+        }
+
         if (password !== confirmPassword) {
             return setError("Passwords do not match");
         }
@@ -30,13 +34,13 @@ export default function ResetPasswordPage() {
             });
 
             const data = await res.json();
+
             if (data.success) {
-                // You can use a toast library here for a better UI than alert
                 router.push("/auth/login?reset=success");
             } else {
                 setError(data.message || "Reset failed");
             }
-        } catch (err) {
+        } catch {
             setError("An error occurred. Please try again.");
         } finally {
             setLoading(false);

@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     user.resetPasswordExpires = new Date(Date.now() + 3600000);
     await user.save();
 
-    const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/auth/reset-password/${resetToken}`;
+    const resetUrl = `${req.nextUrl.origin}/auth/reset-password/${resetToken}`;
 
     const mailOptions = {
       from: `"Smart Library" <${process.env.EMAIL_USER}>`,
@@ -45,9 +45,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, message: "Reset link sent!" });
   } catch (err: any) {
-    console.error("❌ Mailer Error Details:", err.message);
+    console.error("FULL ERROR:", err);
     return NextResponse.json(
-      { success: false, message: "Server error" },
+      { success: false, message: err.message },
       { status: 500 },
     );
   }
