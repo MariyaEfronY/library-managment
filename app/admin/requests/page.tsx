@@ -17,9 +17,11 @@ import {
   Eye,
   RefreshCw,
   Shield,
-  Users
+  Users,
+  X
 } from "lucide-react";
 import React from "react";
+
 
 
 interface Book {
@@ -530,53 +532,122 @@ export default function AdminRequests() {
                         </div>
                       </td>
 
-                      {/* 3. STATUS & MAIN ACTIONS */}
-                      <td className="p-4 align-top min-w-[160px]">
+                      <td className="p-4 align-top min-w-[240px]">
                         {req.status === "pending" ? (
                           activeRequestId === req._id ? (
-                            <div className="flex flex-col gap-2 bg-white p-2 rounded-xl border border-indigo-100 shadow-sm">
-                              <label className="text-[10px] font-bold text-indigo-600 uppercase">Set Return Date</label>
-                              <input
-                                type="date"
-                                value={tempReturnDate}
-                                onChange={(e) => setTempReturnDate(e.target.value)}
-                                className="text-xs p-1.5 border rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
-                              />
-                              <div className="flex gap-1">
-                                <button onClick={() => updateStatus(req._id, "approved")} className="bg-emerald-600 text-white flex-1 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wider">Confirm</button>
-                                <button onClick={() => setActiveRequestId(null)} className="bg-slate-100 text-slate-400 px-2 py-1.5 rounded-md hover:bg-slate-200">X</button>
+                            <div className="flex flex-col gap-3 bg-[#1a1a1a] p-4 rounded-2xl border border-zinc-800 shadow-2xl animate-in fade-in zoom-in duration-200 text-white">
+                              {/* Header with Month Navigation Concept */}
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Select Return Date</span>
+                                <div className="flex gap-2">
+                                  <button className="p-1 hover:bg-zinc-800 rounded"><ChevronUp size={14} className="-rotate-90" /></button>
+                                  <button className="p-1 hover:bg-zinc-800 rounded"><ChevronUp size={14} className="rotate-90" /></button>
+                                </div>
+                              </div>
+
+                              {/* Date Presets (The "Productive" Layer) */}
+                              <div className="grid grid-cols-3 gap-1.5">
+                                {[7, 14, 30].map((days) => (
+                                  <button
+                                    key={days}
+                                    type="button"
+                                    onClick={() => {
+                                      const d = new Date();
+                                      d.setDate(d.getDate() + days);
+                                      setTempReturnDate(d.toISOString().split('T')[0]);
+                                    }}
+                                    className="py-1.5 bg-zinc-800 hover:bg-indigo-600 border border-zinc-700 rounded-lg text-[10px] font-bold transition-all"
+                                  >
+                                    +{days} Days
+                                  </button>
+                                ))}
+                              </div>
+
+                              {/* Custom Calendar-Style Input */}
+                              <div className="space-y-2">
+                                <div className="relative group">
+                                  <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-indigo-400" />
+                                  <input
+                                    type="date"
+                                    value={tempReturnDate}
+                                    min={new Date().toISOString().split("T")[0]}
+                                    onChange={(e) => setTempReturnDate(e.target.value)}
+                                    className="w-full pl-9 pr-3 py-2.5 bg-zinc-900 border border-zinc-700 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none"
+                                    style={{ colorScheme: 'dark' }} // Forces the native picker to be dark-themed
+                                  />
+                                </div>
+
+                                {/* Visual Helper: Days from now */}
+                                {tempReturnDate && (
+                                  <p className="text-[9px] text-zinc-500 italic text-center">
+                                    Book will be due in {Math.ceil((new Date(tempReturnDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="flex gap-2 pt-2 border-t border-zinc-800">
+                                <button
+                                  onClick={() => updateStatus(req._id, "approved")}
+                                  className="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
+                                >
+                                  Issue Book
+                                </button>
+                                <button
+                                  onClick={() => setActiveRequestId(null)}
+                                  className="flex-1 bg-zinc-800 border border-zinc-700 text-zinc-400 py-2.5 rounded-xl hover:bg-zinc-700 transition-colors flex items-center justify-center"
+                                >
+                                  <X size={16} />
+                                </button>
                               </div>
                             </div>
                           ) : (
                             <div className="flex flex-col gap-2">
-                              <button onClick={() => setActiveRequestId(req._id)} className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold rounded-lg shadow-md transition-all">APPROVE REQUEST</button>
-                              <button onClick={() => updateStatus(req._id, "rejected")} className="w-full py-2 bg-red-50 text-red-600 hover:bg-red-100 text-[11px] font-bold rounded-lg transition-all">REJECT</button>
+                              <button
+                                onClick={() => {
+                                  const defaultDays = req.requestedBy?.role === 'staff' ? 30 : 14;
+                                  const d = new Date();
+                                  d.setDate(d.getDate() + defaultDays);
+                                  setTempReturnDate(d.toISOString().split('T')[0]);
+                                  setActiveRequestId(req._id);
+                                }}
+                                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-indigo-900/20 transition-all flex items-center justify-center gap-2 group"
+                              >
+                                <Calendar size={14} className="group-hover:scale-110 transition-transform" />
+                                Set Return Date
+                              </button>
+                              <button
+                                onClick={() => updateStatus(req._id, "rejected")}
+                                className="w-full py-2 text-zinc-500 hover:text-red-400 text-[10px] font-bold transition-colors"
+                              >
+                                Reject Request
+                              </button>
                             </div>
                           )
-                        ) : req.status === "approved" && !req.returned ? (
-                          <button
-                            disabled={isProcessingAction === req._id}
-                            onClick={() => handleReturn(req._id)}
-                            className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 disabled:opacity-50"
-                          >
-                            <RefreshCw size={14} className={isProcessingAction === req._id ? "animate-spin" : ""} />
-                            Return Book
-                          </button>
-                        ) : req.returned && req.fineAmount! > 0 && !req.finePaid ? (
-                          <button
-                            disabled={isProcessingAction === req._id}
-                            onClick={() => handlePayFine(req._id)}
-                            className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-black uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 shadow-lg shadow-amber-100"
-                          >
-                            <AlertCircle size={14} />
-                            Pay ${req.fineAmount} Fine
-                          </button>
-                        ) : (
-                          <div className={`text-center py-2 rounded-lg font-bold text-[11px] uppercase tracking-widest ${req.status === 'rejected' ? 'bg-red-50 text-red-500' : 'bg-slate-100 text-slate-500'
-                            }`}>
-                            {req.status === 'rejected' ? 'Rejected' : 'Completed'}
-                          </div>
-                        )}
+                        )
+                          : req.status === "approved" && !req.returned ? (
+                            <button
+                              disabled={isProcessingAction === req._id}
+                              onClick={() => handleReturn(req._id)}
+                              className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black uppercase tracking-widest rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 disabled:opacity-50 transition-all active:scale-95"
+                            >
+                              <RefreshCw size={14} className={isProcessingAction === req._id ? "animate-spin" : ""} />
+                              Return Book
+                            </button>
+                          ) : req.returned && req.fineAmount! > 0 && !req.finePaid ? (
+                            <button
+                              disabled={isProcessingAction === req._id}
+                              onClick={() => handlePayFine(req._id)}
+                              className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-black uppercase tracking-widest rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-amber-100 transition-all active:scale-95"
+                            >
+                              <AlertCircle size={14} />
+                              Pay ${req.fineAmount} Fine
+                            </button>
+                          ) : (
+                            <div className={`text-center py-2 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] border ${req.status === 'rejected' ? 'bg-red-50 text-red-500 border-red-100' : 'bg-slate-50 text-slate-400 border-slate-100'
+                              }`}>
+                              {req.status === 'rejected' ? 'Rejected' : 'Completed'}
+                            </div>
+                          )}
                       </td>
 
                       {/* 4. DATES */}

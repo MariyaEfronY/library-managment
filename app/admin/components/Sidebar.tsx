@@ -15,7 +15,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function Sidebar() {
-  const router = useRouter(); 
+  const router = useRouter();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -24,6 +24,11 @@ export default function Sidebar() {
     { name: "Dashboard", href: "/admin", icon: <LayoutDashboard className="w-5 h-5" /> },
     { name: "Create Book", href: "/admin/create-book", icon: <BookPlus className="w-5 h-5" /> },
     { name: "Books Requests", href: "/admin/requests", icon: <BookOpen className="w-5 h-5" /> },
+    {
+      name: "Users",
+      href: "/admin/users",
+      icon: <Shield className="w-5 h-5" />, // you can change icon if you want
+    },
   ];
 
   return (
@@ -94,9 +99,8 @@ export default function Sidebar() {
                 `}
               >
                 <div
-                  className={`p-2 rounded-lg ${
-                    active ? "bg-blue-500" : "bg-slate-800/60"
-                  }`}
+                  className={`p-2 rounded-lg ${active ? "bg-blue-500" : "bg-slate-800/60"
+                    }`}
                 >
                   {item.icon}
                 </div>
@@ -109,30 +113,30 @@ export default function Sidebar() {
         {/* Footer */}
         <div className="p-4 border-t border-slate-700">
           <button
-  onClick={async () => {
-    try {
-      // 1. Call the logout API you created earlier
-      const res = await fetch("/api/auth/logout", {
-        method: "POST",
-      });
+            onClick={async () => {
+              try {
+                // 1. Call the logout API you created earlier
+                const res = await fetch("/api/auth/logout", {
+                  method: "POST",
+                });
 
-      if (res.ok) {
-        // 2. Redirect to login page
-        router.push("/auth/login");
-      } else {
-        console.error("Logout failed on server");
-      }
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  }}
-  className="flex items-center justify-center space-x-3 p-3 rounded-xl w-full
+                if (res.ok) {
+                  // 2. Redirect to login page
+                  router.push("/auth/login");
+                } else {
+                  console.error("Logout failed on server");
+                }
+              } catch (error) {
+                console.error("Logout error:", error);
+              }
+            }}
+            className="flex items-center justify-center space-x-3 p-3 rounded-xl w-full
              bg-gradient-to-r from-red-500/20 to-red-600/20
              hover:from-red-500/30 hover:to-red-600/30 transition "
->
-  <LogOut size={20} />
-  <span className="font-medium">Logout</span>
-</button>
+          >
+            <LogOut size={20} />
+            <span className="font-medium">Logout</span>
+          </button>
         </div>
       </aside>
 
