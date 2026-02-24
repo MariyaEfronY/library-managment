@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { 
-  Home, BookOpen, Clock, LogOut, Menu, X, ChevronRight, Layout 
+import {
+  Home, BookOpen, Clock, LogOut, Menu, X, ChevronRight, Layout
 } from "lucide-react";
 
 export default function StudentSidebar() {
@@ -18,6 +18,7 @@ export default function StudentSidebar() {
     { label: "Dashboard", icon: <Layout size={18} />, path: "/student" },
     { label: "Browse Books", icon: <BookOpen size={18} />, path: "/student/requests" },
     { label: "My Requests", icon: <Clock size={18} />, path: "/student/request-status" },
+    { label: "Library", icon: <BookOpen size={18} />, path: "/student/lib-activity" },
   ];
 
   const handleLogout = async () => {
@@ -39,7 +40,7 @@ export default function StudentSidebar() {
 
       {/* BLUR OVERLAY */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[50] lg:hidden animate-in fade-in duration-300"
           onClick={() => setIsOpen(false)}
         />
