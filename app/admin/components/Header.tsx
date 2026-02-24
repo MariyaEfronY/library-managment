@@ -25,23 +25,10 @@ export default function Header() {
     <header className="bg-slate-900 text-white px-6 py-4 shadow-md flex items-center justify-between">
       {/* Title */}
       <h1 className="text-lg font-semibold">
-        Library Admin Dashboard
+        Welcome, {user?.name || "Guest"}
       </h1>
 
-      {/* User Info */}
-      <div className="text-right">
-        {user ? (
-          <>
-            <p className="text-sm font-medium">{user.name}</p>
-            <p className="text-xs text-slate-300 capitalize">
-              {user.role}
-            </p>
-            
-          </>
-        ) : (
-          <div className="h-4 w-24 bg-slate-700 rounded animate-pulse" />
-        )}
-      </div>
+
     </header>
   );
 }
