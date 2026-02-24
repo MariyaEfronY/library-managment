@@ -3,6 +3,19 @@
 import { useState, useRef, useEffect } from "react";
 import { Eye, EyeOff, LockKeyhole, User, Loader2, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { motion, useSpring, useTransform } from "framer-motion";
+
+// Helper component for the rolling number effect
+function Counter({ value }: { value: number }) {
+  const spring = useSpring(0, { mass: 0.8, stiffness: 75, damping: 15 });
+  const display = useTransform(spring, (current) => Math.round(current).toLocaleString());
+
+  useEffect(() => {
+    spring.set(value);
+  }, [value, spring]);
+
+  return <motion.span>{display}</motion.span>;
+}
 
 export default function LoginPage() {
   const [id, setId] = useState("");
@@ -10,18 +23,26 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [visitorCount, setVisitorCount] = useState<number | null>(null);
 
   const logoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const logVisit = async () => {
+      try {
+        const res = await fetch("/api/visitores", { method: "POST" });
+        const data = await res.json();
+        setVisitorCount(data.total);
+      } catch (err) {
+        console.error("Visitor tracking sync failed");
+      }
+    };
+    logVisit();
+
     if (!logoRef.current) return;
     const animation = logoRef.current.animate(
-      [
-        { transform: "scale(1)" },
-        { transform: "scale(1.05)" },
-        { transform: "scale(1)" },
-      ],
-      { duration: 4000, iterations: Infinity, easing: "ease-in-out" }
+      [{ transform: "scale(1)" }, { transform: "scale(1.03)" }, { transform: "scale(1)" }],
+      { duration: 5000, iterations: Infinity, easing: "ease-in-out" }
     );
     return () => animation.cancel();
   }, []);
@@ -50,23 +71,19 @@ export default function LoginPage() {
 
       setTimeout(() => {
         window.location.href =
-          data.user.role === "student"
-            ? "/student"
-            : data.user.role === "staff"
-              ? "/staff"
-              : "/admin";
+          data.user.role === "student" ? "/student" : data.user.role === "staff" ? "/staff" : "/admin";
       }, 800);
     } catch {
-      setError("Network error. Please try again.");
+      setError("Network connection failed.");
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f0f2f5] p-4 sm:p-6 font-sans">
-      <div className="w-full max-w-[950px] flex flex-col md:flex-row bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] overflow-hidden min-h-[550px] border border-white">
+    <div className="min-h-screen flex items-center justify-center bg-[#f0f2f5] p-4 font-sans text-slate-900">
+      <div className="w-full max-w-[950px] flex flex-col md:flex-row bg-white rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] overflow-hidden min-h-[600px] border border-white">
 
-        {/* LEFT BRAND PANEL */}
+        {/* --- LEFT BRAND PANEL --- */}
         <div className="hidden md:flex md:w-[45%] bg-[#0f172a] relative items-center justify-center p-12 overflow-hidden">
           <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-indigo-600/20 rounded-full blur-3xl"></div>
           <div className="absolute bottom-[-10%] left-[-10%] w-64 h-64 bg-blue-600/10 rounded-full blur-3xl"></div>
@@ -75,71 +92,57 @@ export default function LoginPage() {
             <div ref={logoRef} className="mb-8">
               <div className="p-1 rounded-[2.5rem] bg-gradient-to-tr from-indigo-500 to-blue-400 shadow-2xl shadow-indigo-500/30">
                 <div className="bg-slate-900/40 backdrop-blur-xl rounded-[2.3rem] p-8 border border-white/10">
-                  <img
-                    src="/login-card-bg.png"
-                    alt="Logo"
-                    className="w-32 h-32 object-contain filter drop-shadow-2xl"
-                  />
+                  <img src="/login-card-bg.png" alt="Logo" className="w-32 h-32 object-contain filter drop-shadow-2xl" />
                 </div>
               </div>
             </div>
-            <h2 className="text-white text-3xl font-bold tracking-tight mb-2">Smart Library</h2>
-            <p className="text-slate-400 text-lg font-medium tracking-widest uppercase opacity-80">SJC</p>
-            <div className="mt-12 h-1 w-12 bg-indigo-500 rounded-full"></div>
+            <h2 className="text-white text-3xl font-black tracking-tight mb-2 italic">Smart Library</h2>
+            <p className="text-slate-400 text-sm font-black tracking-[0.3em] uppercase opacity-60">SJC Systems</p>
           </div>
         </div>
 
-        {/* RIGHT FORM PANEL */}
+        {/* --- RIGHT FORM PANEL --- */}
         <div className="w-full md:w-[55%] flex flex-col justify-center p-8 sm:p-16 bg-white">
           <div className="mb-10 text-left">
-            <div className="md:hidden flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">SL</span>
-              </div>
-              <span className="text-slate-900 font-bold text-xl tracking-tight">Smart Library</span>
-            </div>
-            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Welcome Back</h1>
-            <p className="text-slate-500 mt-2 font-medium">Please enter your details to sign in.</p>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Portal Login</h1>
+            <p className="text-slate-500 mt-2 font-medium">Verify your identity to continue.</p>
           </div>
 
           {error && (
-            <div className="mb-6 flex items-center gap-3 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600 animate-in fade-in slide-in-from-top-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-600"></span>
+            <div className="mb-6 flex items-center gap-3 rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-xs font-bold text-red-600">
+              <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
               {error}
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-6">
-            {/* USER ID */}
+          <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
-              <label className="block text-sm font-bold text-slate-700 ml-1">User ID</label>
+              <label className="block text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Identity ID</label>
               <div className="relative group">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors pointer-events-none">
-                  <User size={20} strokeWidth={2.5} />
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-600 transition-colors">
+                  <User size={18} strokeWidth={3} />
                 </div>
                 <input
                   type="text"
                   value={id}
                   onChange={(e) => setId(e.target.value)}
                   required
-                  placeholder="Enter your ID"
-                  className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all shadow-sm"
+                  placeholder="Register No.."
+                  className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all shadow-sm"
                 />
               </div>
             </div>
 
-            {/* PASSWORD */}
             <div className="space-y-2">
               <div className="flex justify-between items-center px-1">
-                <label className="text-sm font-bold text-slate-700">Password</label>
-                {/* ✅ Removed size="sm" invalid prop */}
-                <Link href="/auth/forgot-password" className="text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors">
-                  Forgot Password?
+                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Secret Key</label>
+                <Link href="/auth/forgot-password" title="Recover Password" className="text-[10px] font-black text-indigo-600 uppercase tracking-tighter hover:text-indigo-800 transition-colors">
+                  Recovery Mode
                 </Link>
               </div>
               <div className="relative group">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors pointer-events-none">
-                  <LockKeyhole size={20} strokeWidth={2.5} />
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-600 transition-colors">
+                  <LockKeyhole size={18} strokeWidth={3} />
                 </div>
                 <input
                   type={showPassword ? "text" : "password"}
@@ -147,37 +150,90 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className="w-full pl-12 pr-12 py-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all shadow-sm"
+                  className="w-full pl-12 pr-12 py-4 rounded-2xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all shadow-sm"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors"
                 >
-                  {showPassword ? <EyeOff size={20} strokeWidth={2.5} /> : <Eye size={20} strokeWidth={2.5} />}
+                  {showPassword ? <EyeOff size={18} strokeWidth={3} /> : <Eye size={18} strokeWidth={3} />}
                 </button>
               </div>
             </div>
 
-            {/* SUBMIT BUTTON */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-xl shadow-indigo-200 transition-all active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center gap-2 group"
+              className="w-full bg-slate-900 hover:bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-slate-200 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 group mt-4"
             >
-              {isLoading ? (
-                <Loader2 className="animate-spin" size={20} />
-              ) : (
-                <>
-                  Sign In
-                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                </>
+              {isLoading ? <Loader2 className="animate-spin" size={20} /> : (
+                <>Authorize Session <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" /></>
               )}
             </button>
           </form>
 
-          <p className="mt-10 text-center text-slate-500 text-sm font-medium">
-            Accessing for the first time? <span className="text-indigo-600 font-bold cursor-help hover:underline">Contact Admin</span>
+          {/* --- PERFECTED PURIFIED WIDGET --- */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="mt-10 pt-8 border-t border-slate-50 flex items-center justify-between"
+          >
+            <div className="flex items-center gap-5">
+              <div className="relative flex items-center justify-center">
+                <span className="animate-ping absolute inline-flex h-4 w-4 rounded-full bg-indigo-400/20 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-600 shadow-[0_0_8px_rgba(79,70,229,0.4)]"></span>
+              </div>
+
+              <div className="text-3xl font-black text-slate-900 tabular-nums tracking-tighter">
+                {visitorCount !== null ? (
+                  <Counter value={visitorCount} />
+                ) : (
+                  <span className="opacity-10">000</span>
+                )}
+              </div>
+            </div>
+
+            <div className="w-32 h-12 relative overflow-hidden">
+              <svg viewBox="0 0 100 40" className="w-full h-full drop-shadow-[0_4px_8px_rgba(99,102,241,0.1)]">
+                <defs>
+                  <linearGradient id="liquidFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#6366f1" stopOpacity="0.15" />
+                    <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+
+                <motion.path
+                  d="M0 35 Q 15 15, 30 25 T 60 10 T 100 20 V 40 H 0 Z"
+                  fill="url(#liquidFill)"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 1.5 }}
+                />
+
+                <motion.path
+                  d="M0 35 Q 15 15, 30 25 T 60 10 T 100 20"
+                  fill="none"
+                  stroke="#6366f1"
+                  strokeWidth="3.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    repeatType: "mirror",
+                    ease: "easeInOut"
+                  }}
+                />
+              </svg>
+            </div>
+          </motion.div>
+
+          <p className="mt-8 text-center text-slate-500 text-[11px] font-medium uppercase tracking-widest">
+            First time access? <span className="text-indigo-600 font-bold cursor-help hover:underline">Contact Admin</span>
           </p>
         </div>
       </div>
