@@ -3,97 +3,152 @@
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
-  Home, BookOpen, Clock, LogOut, Menu, X, ChevronRight, Layout
+  LayoutDashboard,
+  BookOpen,
+  History,
+  Activity,
+  LogOut,
+  Menu,
+  X,
+  ChevronRight,
+  User as UserIcon
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function StudentSidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState<{ name: string; rollNumber: string } | null>(null);
 
-  // Close menu on navigation (Mobile)
-  useEffect(() => setIsOpen(false), [pathname]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsOpen(false);
+    // Fetch user details for the footer
+    fetch("/api/auth/me")
+      .then(res => res.json())
+      .then(data => { if (data.success) setUser(data.user); });
+  }, [pathname]);
 
   const menuItems = [
-    { label: "Dashboard", icon: <Layout size={18} />, path: "/student" },
-    { label: "Browse Books", icon: <BookOpen size={18} />, path: "/student/requests" },
-    { label: "My Requests", icon: <Clock size={18} />, path: "/student/request-status" },
-    { label: "Library", icon: <BookOpen size={18} />, path: "/student/lib-activity" },
+    { label: "Overview", icon: LayoutDashboard, path: "/student" },
+    { label: "Book Catalog", icon: BookOpen, path: "/student/requests" },
+    { label: "My Requests", icon: History, path: "/student/request-status" },
+    { label: "Visit Logs", icon: Activity, path: "/student/lib-activity" },
   ];
 
   const handleLogout = async () => {
-    try {
-      const res = await fetch("/api/auth/logout", { method: "POST" });
-      if (res.ok) { router.push("/"); router.refresh(); }
-    } catch (err) { console.error(err); }
+    const res = await fetch("/api/auth/logout", { method: "POST" });
+    if (res.ok) { router.push("/"); router.refresh(); }
   };
 
   return (
     <>
-      {/* ADVANCED BURGER BUTTON */}
+      {/* MOBILE TRIGGER */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-[60] p-3 rounded-2xl bg-[#0f172a] text-white shadow-xl border border-white/10 active:scale-90 transition-all"
+        className="lg:hidden fixed top-5 left-5 z-[70] p-3 rounded-2xl bg-[#0B0F1A] text-white shadow-2xl border border-slate-800 active:scale-95 transition-transform"
       >
         {isOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
-      {/* BLUR OVERLAY */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[50] lg:hidden animate-in fade-in duration-300"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
+      {/* MOBILE OVERLAY */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsOpen(false)}
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[50] lg:hidden"
+          />
+        )}
+      </AnimatePresence>
 
-      {/* SIDEBAR CONTAINER */}
+      {/* SIDEBAR */}
       <aside className={`
-        fixed top-0 left-0 z-[55] h-screen w-64 
-        bg-[#0f172a] border-r border-slate-800 flex flex-col
-        transition-all duration-300 ease-in-out
+        fixed top-0 left-0 z-[60] h-screen w-72 
+        bg-[#0B0F1A] border-r border-slate-800/50 flex flex-col
+        transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
         ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}>
+
+        {/* DECORATIVE GLOW */}
+        <div className="absolute top-0 left-0 w-full h-64 bg-indigo-600/5 blur-[100px] pointer-events-none" />
+
         {/* LOGO SECTION */}
-        <div className="p-8 flex flex-col items-center">
-          <div className="w-16 h-16 bg-white/5 rounded-2xl p-2 border border-white/10 shadow-2xl mb-4 group hover:border-indigo-500/50 transition-colors">
-            <img src="/login-card-bg.png" alt="Logo" className="w-full h-full object-contain" />
+        <div className="relative p-10 flex flex-col items-center">
+          <div className="relative group cursor-pointer">
+            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+            <div className="relative w-16 h-16 bg-[#161B29] rounded-2xl p-3 border border-slate-700/50 flex items-center justify-center">
+              <img src="/login-card-bg.png" alt="Logo" className="w-full h-full object-contain" />
+            </div>
           </div>
-          <div className="text-center">
-            <h2 className="text-white text-xs font-bold tracking-[0.2em] uppercase">Student Portal</h2>
-            <div className="h-1 w-8 bg-indigo-500 mx-auto mt-2 rounded-full" />
+          <div className="mt-5 text-center">
+            <h2 className="text-white text-[10px] font-black tracking-[0.3em] uppercase opacity-80">
+              SJC
+            </h2>
           </div>
         </div>
 
         {/* NAVIGATION */}
-        <nav className="flex-1 px-4 space-y-2 mt-4">
+        <nav className="flex-1 px-6 space-y-1.5 mt-4 overflow-y-auto custom-scrollbar">
           {menuItems.map((item) => {
             const active = pathname === item.path;
+            const Icon = item.icon;
+
             return (
               <button
                 key={item.path}
                 onClick={() => router.push(item.path)}
-                className={`w-full flex items-center justify-between p-3.5 rounded-xl transition-all group
-                  ${active ? "bg-indigo-600/10 text-white" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}
+                className={`relative w-full flex items-center justify-between p-3.5 rounded-xl transition-all duration-300 group
+                  ${active ? "text-white" : "text-slate-500 hover:text-slate-200"}`}
               >
-                <div className="flex items-center gap-3">
-                  <span className={`${active ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300"}`}>
-                    {item.icon}
+                {active && (
+                  <motion.div
+                    layoutId="active-pill"
+                    className="absolute inset-0 bg-indigo-600/10 border-l-2 border-indigo-500 rounded-xl"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+
+                <div className="relative z-10 flex items-center gap-4">
+                  <div className={`p-2 rounded-lg transition-colors duration-300 ${active ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : "bg-slate-800/40 group-hover:bg-slate-800"}`}>
+                    <Icon size={18} strokeWidth={active ? 2.5 : 2} />
+                  </div>
+                  <span className={`text-xs font-black uppercase tracking-widest transition-opacity ${active ? "opacity-100" : "opacity-60 group-hover:opacity-100"}`}>
+                    {item.label}
                   </span>
-                  <span className="text-sm font-semibold">{item.label}</span>
                 </div>
-                {active && <ChevronRight size={14} className="text-indigo-400" />}
+
+                {active && <ChevronRight size={14} className="relative z-10 text-indigo-500" />}
               </button>
             );
           })}
         </nav>
 
-        {/* FOOTER / LOGOUT */}
-        <div className="p-4 bg-slate-900/50 border-t border-slate-800">
+        {/* USER PROFILE & LOGOUT */}
+        <div className="p-6 mt-auto space-y-4">
+          {/* USER CARD */}
+          <div className="flex items-center gap-3 p-3 bg-slate-900/40 border border-slate-800/50 rounded-2xl">
+            <div className="w-10 h-10 rounded-xl bg-indigo-600/10 flex items-center justify-center text-indigo-400 border border-indigo-500/20">
+              <UserIcon size={18} />
+            </div>
+            <div className="overflow-hidden">
+              <p className="text-[10px] font-black text-white truncate uppercase tracking-wider">
+                {user?.name || "Loading..."}
+              </p>
+              <p className="text-[9px] font-bold text-slate-500 truncate uppercase">
+                {user?.rollNumber || "ID: ---"}
+              </p>
+            </div>
+          </div>
+
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-3 py-3 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all font-bold text-xs"
+            className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl bg-rose-500/5 text-rose-500 border border-rose-500/10 hover:bg-rose-500 hover:text-white transition-all duration-500 ease-out font-black text-[10px] uppercase tracking-[0.2em]"
           >
-            <LogOut size={16} /> SIGN OUT
+            <LogOut size={16} /> Logout
           </button>
         </div>
       </aside>
