@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Edit2, Trash2, Eye, BookOpen, Search, Filter } from "lucide-react";
-import { RefreshCw } from "lucide-react";
+import { Edit2, Trash2, BookOpen, Search, RefreshCw } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import DataSkeleton from "../../components/SkeletonLoader"; // We use the shimmer logic from here
 
 interface Book {
   bookId: string;
@@ -31,19 +32,8 @@ export default function BooksTable({ onEdit }: BooksTableProps) {
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async (bookId: string) => {
-    if (!confirm("Are you sure you want to delete this book?")) return;
-    try {
-      const res = await fetch(`/api/books/${bookId}`, { method: "DELETE" });
-      const data = await res.json();
-      alert(data.message);
-      if (data.success) fetchBooks();
-    } catch (err) {
-      console.error(err);
+      // Small delay to ensure the smooth emotional transition
+      setTimeout(() => setLoading(false), 800);
     }
   };
 
@@ -51,11 +41,39 @@ export default function BooksTable({ onEdit }: BooksTableProps) {
     fetchBooks();
   }, []);
 
+  const handleDelete = async (bookId: string) => {
+    if (!confirm("Are you sure you want to delete this book?")) return;
+    try {
+      const res = await fetch(`/api/books/${bookId}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) fetchBooks();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const filteredBooks = books.filter(book =>
     book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
     book.bookId.toLowerCase().includes(searchTerm.toLowerCase()) ||
     book.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // --- INTERNAL TABLE SKELETON ROW ---
+  const TableRowSkeleton = () => (
+    <tr className="border-b border-gray-50">
+      {Array(7).fill(0).map((_, i) => (
+        <td key={i} className="p-4">
+          <div className="relative h-6 w-full bg-slate-100 rounded-lg overflow-hidden">
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent"
+              animate={{ x: ["-100%", "100%"] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+            />
+          </div>
+        </td>
+      ))}
+    </tr>
   );
 
   const getStatusColor = (status: string) => {
@@ -88,22 +106,22 @@ export default function BooksTable({ onEdit }: BooksTableProps) {
       <div className="p-6 border-b border-gray-200">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Books Library</h2>
-            <p className="text-gray-600 text-sm mt-1">
+            <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Books Library</h2>
+            <p className="text-gray-500 text-sm mt-1">
               Total {books.length} books • {filteredBooks.length} filtered
             </p>
           </div>
 
           <div className="relative w-full md:w-64">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
               placeholder="Search books..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 
-             rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-             outline-none transition-colors text-gray-900 placeholder:text-gray-500"
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-transparent 
+             rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 
+             outline-none transition-all text-gray-900 placeholder:text-gray-400"
             />
           </div>
         </div>
@@ -111,148 +129,106 @@ export default function BooksTable({ onEdit }: BooksTableProps) {
 
       {/* Table Container */}
       <div className="overflow-x-auto">
-        {loading ? (
-          <div className="p-12 text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-            <p className="mt-4 text-gray-600">Loading books...</p>
-          </div>
-        ) : filteredBooks.length === 0 ? (
-          <div className="p-12 text-center">
-            <BookOpen className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-4 text-lg font-medium text-gray-900">No books found</h3>
-            <p className="mt-2 text-gray-600">
-              {searchTerm ? "Try a different search term" : "No books available"}
-            </p>
-          </div>
-        ) : (
-          <table className="w-full">
-            <thead className="bg-gradient-to-r from-slate-800 to-slate-900">
-              <tr>
-                <th className="p-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
-                  Book ID
+        <table className="w-full">
+          <thead className="bg-slate-900">
+            <tr>
+              {["Book ID", "Title", "Author", "Category", "Copies", "Status", "Actions"].map((header) => (
+                <th key={header} className="p-4 text-left text-xs font-bold text-white uppercase tracking-widest opacity-80">
+                  {header}
                 </th>
-                <th className="p-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
-                  Title
-                </th>
-                <th className="p-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
-                  Author
-                </th>
-                <th className="p-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
-                  Category
-                </th>
-                <th className="p-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
-                  Copies
-                </th>
-                <th className="p-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="p-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filteredBooks.map((book) => (
-                <tr
-                  key={book.bookId}
-                  className="hover:bg-gray-50 transition-colors duration-150"
-                >
-                  <td className="p-4">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 
-                                    rounded-lg flex items-center justify-center mr-3">
-                        <span className="text-blue-800 font-bold text-sm">B</span>
-                      </div>
-                      <span className="font-medium text-gray-800">{book.bookId}</span>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="max-w-xs">
-                      <p className="font-semibold text-gray-800 truncate">{book.title}</p>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <p className="text-gray-700">{book.author}</p>
-                  </td>
-                  <td className="p-4">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full 
-                                   text-xs font-medium border ${getCategoryColor(book.category)}`}>
-                      {book.category}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center">
-                      <div className="w-12 h-6 bg-blue-50 rounded-full flex items-center justify-center">
-                        <span className="font-bold text-blue-700">{book.availableCopies}</span>
-                      </div>
-                      <span className="text-gray-500 text-sm ml-2">copies</span>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full 
-                                   text-xs font-medium border ${getStatusColor(book.status)}`}>
-                      {book.status.charAt(0).toUpperCase() + book.status.slice(1)}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => onEdit(book)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 
-                                 text-amber-700 hover:bg-amber-100 border border-amber-200 
-                                 rounded-lg transition-colors"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                        <span className="text-sm font-medium">Edit</span>
-                      </button>
-                      <button
-                        onClick={() => handleDelete(book.bookId)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 
-                                 text-red-700 hover:bg-red-100 border border-red-200 
-                                 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        <span className="text-sm font-medium">Delete</span>
-                      </button>
-                    </div>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            <AnimatePresence mode="popLayout">
+              {loading ? (
+                // Show 5 skeleton rows while loading
+                [...Array(5)].map((_, i) => <TableRowSkeleton key={`skeleton-${i}`} />)
+              ) : filteredBooks.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-12 text-center">
+                    <BookOpen className="mx-auto h-12 w-12 text-gray-200" />
+                    <h3 className="mt-4 text-lg font-medium text-gray-900">No books found</h3>
+                    <p className="mt-2 text-gray-500">Try a different search term</p>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              ) : (
+                filteredBooks.map((book, idx) => (
+                  <motion.tr
+                    key={book.bookId}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.03 }}
+                    className="hover:bg-slate-50/50 transition-colors"
+                  >
+                    <td className="p-4">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center mr-3 border border-indigo-100">
+                          <span className="text-indigo-600 font-bold text-sm">B</span>
+                        </div>
+                        <span className="font-bold text-gray-700 tracking-tight">{book.bookId}</span>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <p className="font-bold text-gray-900 truncate max-w-[200px]">{book.title}</p>
+                    </td>
+                    <td className="p-4">
+                      <p className="text-gray-600 font-medium">{book.author}</p>
+                    </td>
+                    <td className="p-4">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${getCategoryColor(book.category)}`}>
+                        {book.category}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-indigo-600">{book.availableCopies}</span>
+                        <span className="text-gray-400 text-xs font-medium uppercase">Units</span>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase border ${getStatusColor(book.status)}`}>
+                        {book.status}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => onEdit(book)}
+                          className="p-2 bg-amber-50 text-amber-600 hover:bg-amber-600 hover:text-white rounded-xl transition-all border border-amber-100"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(book.bookId)}
+                          className="p-2 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl transition-all border border-rose-100"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))
+              )}
+            </AnimatePresence>
+          </tbody>
+        </table>
       </div>
 
-      {/* Table Footer */}
+      {/* Footer remains exact same */}
       {!loading && filteredBooks.length > 0 && (
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              Showing <span className="font-semibold">{filteredBooks.length}</span> of{" "}
-              <span className="font-semibold">{books.length}</span> books
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setSearchTerm("")}
-                className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 
-                         hover:bg-gray-200 rounded-lg transition-colors"
-              >
-                Clear Search
-              </button>
-              <button
-                onClick={fetchBooks}
-                className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 
-                         hover:bg-blue-100 border border-blue-200 rounded-lg 
-                         transition-colors flex items-center gap-1.5"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Refresh
-              </button>
-            </div>
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+          <div className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+            Showing {filteredBooks.length} of {books.length} entries
           </div>
+          <button
+            onClick={fetchBooks}
+            className="px-4 py-2 text-xs bg-indigo-50 text-indigo-600 font-bold border border-indigo-100 rounded-xl hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-2"
+          >
+            <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} /> Sync Database
+          </button>
         </div>
       )}
     </div>
   );
 }
-

@@ -2,14 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, ClipboardList, BookOpen, LogOut, Menu, X, ChevronRight, Settings 
+import {
+  LayoutDashboard, ClipboardList, BookOpen, LogOut, Menu, X, ChevronRight, Settings
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import LogoLoader from "../../../app/components/LogoLoader"; // Ensure this path is correct
 
 export default function StaffSidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false); // New state for the loader
 
   useEffect(() => setIsOpen(false), [pathname]);
 
@@ -20,14 +23,42 @@ export default function StaffSidebar() {
   ];
 
   const handleLogout = async () => {
+    setIsLoggingOut(true); // Trigger the emotional loader
+
     try {
       const res = await fetch("/api/auth/logout", { method: "POST" });
-      if (res.ok) { router.push("/"); router.refresh(); }
-    } catch (err) { console.error(err); }
+
+      // Artificial delay to allow the breathing animation to complete 1 cycle (~1.5s)
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      if (res.ok) {
+        router.push("/");
+        router.refresh();
+      } else {
+        setIsLoggingOut(false);
+      }
+    } catch (err) {
+      console.error(err);
+      setIsLoggingOut(false);
+    }
   };
 
   return (
     <>
+      {/* --- EMOTIONAL LOGO LOADER OVERLAY --- */}
+      <AnimatePresence>
+        {isLoggingOut && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] pointer-events-auto"
+          >
+            <LogoLoader />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* BURGER BUTTON */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -37,9 +68,17 @@ export default function StaffSidebar() {
       </button>
 
       {/* OVERLAY */}
-      {isOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[50] lg:hidden" onClick={() => setIsOpen(false)} />
-      )}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[50] lg:hidden"
+            onClick={() => setIsOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       <aside className={`
         fixed top-0 left-0 z-[55] h-screen w-64 bg-[#0f172a] border-r border-slate-800 flex flex-col transition-transform duration-300
@@ -80,9 +119,10 @@ export default function StaffSidebar() {
         <div className="p-4 bg-slate-900/50 border-t border-slate-800">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-3 py-3 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all font-bold text-xs"
+            disabled={isLoggingOut}
+            className="w-full flex items-center justify-center gap-3 py-3 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all font-bold text-xs disabled:opacity-50"
           >
-            <LogOut size={16} /> SIGN OUT
+            <LogOut size={16} /> {isLoggingOut ? "SIGNING OUT..." : "SIGN OUT"}
           </button>
         </div>
       </aside>
