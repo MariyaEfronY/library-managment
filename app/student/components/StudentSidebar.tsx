@@ -14,17 +14,18 @@ import {
   User as UserIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import LogoLoader from "../../../app/components/LogoLoader"; // Verify this path
 
 export default function StudentSidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false); // Loader State
   const [user, setUser] = useState<{ name: string; rollNumber: string } | null>(null);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsOpen(false);
-    // Fetch user details for the footer
     fetch("/api/auth/me")
       .then(res => res.json())
       .then(data => { if (data.success) setUser(data.user); });
@@ -38,12 +39,42 @@ export default function StudentSidebar() {
   ];
 
   const handleLogout = async () => {
-    const res = await fetch("/api/auth/logout", { method: "POST" });
-    if (res.ok) { router.push("/"); router.refresh(); }
+    setIsLoggingOut(true); // 1. Start Animation
+
+    try {
+      const res = await fetch("/api/auth/logout", { method: "POST" });
+
+      // 2. Artificial delay (1.5s) to let the LogoLoader play smoothly
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      if (res.ok) {
+        router.push("/");
+        router.refresh();
+      } else {
+        setIsLoggingOut(false);
+      }
+    } catch (error) {
+      console.error("Logout failed", error);
+      setIsLoggingOut(false);
+    }
   };
 
   return (
     <>
+      {/* --- LOGO LOADER OVERLAY --- */}
+      <AnimatePresence>
+        {isLoggingOut && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] pointer-events-auto"
+          >
+            <LogoLoader />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* MOBILE TRIGGER */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -129,7 +160,6 @@ export default function StudentSidebar() {
 
         {/* USER PROFILE & LOGOUT */}
         <div className="p-6 mt-auto space-y-4">
-          {/* USER CARD */}
           <div className="flex items-center gap-3 p-3 bg-slate-900/40 border border-slate-800/50 rounded-2xl">
             <div className="w-10 h-10 rounded-xl bg-indigo-600/10 flex items-center justify-center text-indigo-400 border border-indigo-500/20">
               <UserIcon size={18} />
@@ -146,9 +176,10 @@ export default function StudentSidebar() {
 
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl bg-rose-500/5 text-rose-500 border border-rose-500/10 hover:bg-rose-500 hover:text-white transition-all duration-500 ease-out font-black text-[10px] uppercase tracking-[0.2em]"
+            disabled={isLoggingOut}
+            className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl bg-rose-500/5 text-rose-500 border border-rose-500/10 hover:bg-rose-500 hover:text-white transition-all duration-500 ease-out font-black text-[10px] uppercase tracking-[0.2em] disabled:opacity-50"
           >
-            <LogOut size={16} /> Logout
+            <LogOut size={16} /> {isLoggingOut ? "Processing..." : "Logout"}
           </button>
         </div>
       </aside>

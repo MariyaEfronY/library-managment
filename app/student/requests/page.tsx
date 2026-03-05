@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Search, 
-  BookOpen, 
-  Loader2, 
-  CheckCircle, 
-  Clock, 
-  Filter, 
+import {
+  Search,
+  BookOpen,
+  Loader2,
+  CheckCircle,
+  Clock,
+  Filter,
   ArrowRight,
   BookmarkCheck,
   Info
@@ -35,7 +35,7 @@ export default function StudentRequests() {
         const myReqsData = await myReqsRes.json();
 
         if (booksData.success) setBooks(booksData.books || []);
-        
+
         if (myReqsData.success) {
           const statusMap: Record<string, string> = {};
           myReqsData.requests.forEach((req: any) => {
@@ -80,8 +80,8 @@ export default function StudentRequests() {
   };
 
   const filteredBooks = books.filter(book => {
-    const matchesSearch = book.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          book.author?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = book.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      book.author?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = filter === "all" || book.availableCopies > 0;
     return matchesSearch && matchesFilter;
   });
@@ -89,9 +89,9 @@ export default function StudentRequests() {
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20 lg:ml-64 transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-16 lg:pt-12">
-        
+
         {/* HEADER SECTION */}
-        <motion.header 
+        <motion.header
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           className="mb-10"
@@ -111,7 +111,7 @@ export default function StudentRequests() {
         </motion.header>
 
         {/* GLASSMORPHISM SEARCH BAR */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="sticky top-6 z-30 mb-12"
@@ -127,10 +127,10 @@ export default function StudentRequests() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            
+
             <div className="flex items-center gap-2 bg-slate-50/50 rounded-2xl px-4 py-2 border border-slate-100">
               <Filter size={16} className="text-slate-400" />
-              <select 
+              <select
                 className="bg-transparent border-none text-slate-700 font-bold text-sm focus:ring-0 cursor-pointer outline-none"
                 onChange={(e) => setFilter(e.target.value as any)}
               >
@@ -148,7 +148,7 @@ export default function StudentRequests() {
             <p className="text-slate-400 font-bold animate-pulse text-xs uppercase tracking-widest">Loading Catalog...</p>
           </div>
         ) : (
-          <motion.div 
+          <motion.div
             layout
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8"
           >
@@ -169,33 +169,31 @@ export default function StudentRequests() {
                     {/* Cover Image Wrapper */}
                     <div className="aspect-[3/4] bg-slate-100 relative overflow-hidden">
                       {book.imageUrl ? (
-                        <img 
-                          src={book.imageUrl} 
-                          className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" 
-                          alt={book.title} 
+                        <img
+                          src={book.imageUrl}
+                          className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                          alt={book.title}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-slate-200">
                           <BookOpen size={64} strokeWidth={1} />
                         </div>
                       )}
-                      
+
                       {/* Status Overlays */}
                       <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
                         {status && (
-                          <motion.span 
+                          <motion.span
                             initial={{ x: 20 }} animate={{ x: 0 }}
-                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-tighter shadow-xl backdrop-blur-md border border-white/20 ${
-                              status === 'approved' ? 'bg-emerald-500/90 text-white' : 
-                              status === 'rejected' ? 'bg-rose-500/90 text-white' : 'bg-amber-500/90 text-white'
-                            }`}
+                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-tighter shadow-xl backdrop-blur-md border border-white/20 ${status === 'approved' ? 'bg-emerald-500/90 text-white' :
+                                status === 'rejected' ? 'bg-rose-500/90 text-white' : 'bg-amber-500/90 text-white'
+                              }`}
                           >
                             {status}
                           </motion.span>
                         )}
-                        <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-tighter backdrop-blur-md border ${
-                          isOutOfStock ? 'bg-slate-900/80 text-white border-slate-700' : 'bg-white/80 text-blue-600 border-white'
-                        }`}>
+                        <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-tighter backdrop-blur-md border ${isOutOfStock ? 'bg-slate-900/80 text-white border-slate-700' : 'bg-white/80 text-blue-600 border-white'
+                          }`}>
                           {isOutOfStock ? "Sold Out" : `${book.availableCopies} In Stock`}
                         </span>
                       </div>
@@ -214,13 +212,12 @@ export default function StudentRequests() {
                         <button
                           onClick={() => requestBook(book._id)}
                           disabled={loadingId === book._id || isOutOfStock || !!(status && status !== "rejected")}
-                          className={`w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                            status === "approved" ? "bg-emerald-50 text-emerald-600 cursor-default" :
-                            status === "pending" ? "bg-amber-50 text-amber-600 cursor-default" :
-                            status === "rejected" ? "bg-rose-600 text-white hover:bg-rose-700" :
-                            isOutOfStock ? "bg-slate-100 text-slate-400 cursor-not-allowed" :
-                            "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200 active:scale-95"
-                          }`}
+                          className={`w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${status === "approved" ? "bg-emerald-50 text-emerald-600 cursor-default" :
+                              status === "pending" ? "bg-amber-50 text-amber-600 cursor-default" :
+                                status === "rejected" ? "bg-rose-600 text-white hover:bg-rose-700" :
+                                  isOutOfStock ? "bg-slate-100 text-slate-400 cursor-not-allowed" :
+                                    "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200 active:scale-95"
+                            }`}
                         >
                           {loadingId === book._id ? (
                             <Loader2 className="animate-spin" size={18} />
@@ -236,7 +233,7 @@ export default function StudentRequests() {
                             <span className="flex items-center gap-2">Request Book <ArrowRight size={14} /></span>
                           )}
                         </button>
-                        
+
                         {status === "rejected" && (
                           <div className="flex items-center justify-center gap-1.5 text-rose-500 animate-pulse">
                             <Info size={12} />
