@@ -166,7 +166,7 @@ export default function RegisterPage() {
                           value={rollNumber}
                           onChange={(e) => setRollNumber(e.target.value)}
                           placeholder="e.g. 21CS101"
-                          className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all"
+                          className="w-full px-5 py-4 text-black rounded-2xl bg-slate-50 border border-slate-200 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all"
                           required
                         />
                       </div>
@@ -194,7 +194,7 @@ export default function RegisterPage() {
                           value={adminId}
                           onChange={(e) => setAdminId(e.target.value)}
                           placeholder="ADM-001"
-                          className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all"
+                          className="w-full px-5 text-black py-4 rounded-2xl bg-slate-50 border border-slate-200 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all"
                           required
                         />
                       </div>

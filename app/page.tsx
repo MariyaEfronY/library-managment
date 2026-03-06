@@ -196,26 +196,64 @@ export default function LoginPage() {
 
             {/* --- VISITOR WIDGET --- */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
-              className="mt-10 pt-8 border-t border-slate-50 flex items-center justify-between"
+              className="mt-10 pt-8 border-t border-slate-100 flex items-center justify-between"
             >
-              <div className="flex items-center gap-5">
-                <div className="relative flex items-center justify-center">
-                  <span className="animate-ping absolute inline-flex h-4 w-4 rounded-full bg-indigo-400/20 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-600 shadow-[0_0_8px_rgba(79,70,229,0.4)]"></span>
+              {/* LEFT SIDE */}
+              <div className="flex items-center gap-4">
+
+
+
+                {/* EYE ICON */}
+                <div className="relative w-8 h-8 flex items-center justify-center">
+
+                  <motion.svg
+                    viewBox="0 0 24 24"
+                    className="w-7 h-7 text-indigo-600"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M1 12C3.5 7 7.5 4 12 4C16.5 4 20.5 7 23 12C20.5 17 16.5 20 12 20C7.5 20 3.5 17 1 12Z" />
+
+                    {/* PUPIL */}
+                    <motion.circle
+                      cx="12"
+                      cy="12"
+                      r="3"
+                      fill="#6366f1"
+                      animate={{
+                        scaleY: [1, 0.1, 1],
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    />
+                  </motion.svg>
+
                 </div>
 
-                <div className="text-3xl font-black text-slate-900 tabular-nums tracking-tighter">
-                  {visitorCount !== null ? (
-                    <Counter value={visitorCount} />
-                  ) : (
-                    <span className="opacity-10">000</span>
-                  )}
+                {/* VISITOR COUNT */}
+                <div className="flex flex-col">
+                  <div className="text-xs text-slate-400 font-medium">
+                    Live Visitors
+                  </div>
+
+                  <div className="text-3xl font-black text-slate-900 tabular-nums tracking-tighter">
+                    {visitorCount !== null ? (
+                      <Counter value={visitorCount} />
+                    ) : (
+                      <span className="opacity-10">000</span>
+                    )}
+                  </div>
                 </div>
               </div>
 
+              {/* RIGHT SIDE GRAPH */}
               <div className="w-32 h-12 relative overflow-hidden">
                 <svg viewBox="0 0 100 40" className="w-full h-full drop-shadow-[0_4px_8px_rgba(99,102,241,0.1)]">
                   <defs>
@@ -224,6 +262,7 @@ export default function LoginPage() {
                       <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
                     </linearGradient>
                   </defs>
+
                   <motion.path
                     d="M0 35 Q 15 15, 30 25 T 60 10 T 100 20 V 40 H 0 Z"
                     fill="url(#liquidFill)"
@@ -231,6 +270,7 @@ export default function LoginPage() {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 1.5 }}
                   />
+
                   <motion.path
                     d="M0 35 Q 15 15, 30 25 T 60 10 T 100 20"
                     fill="none"

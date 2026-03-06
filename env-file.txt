@@ -1,0 +1,18 @@
+MONGO_URI=mongodb+srv://mariyaefrony:efrony2006@painter.1eimm06.mongodb.net/smart-libruary
+
+JWT_SECRET=ae28c4a9d48dbbc03b91c52392b1ae92
+
+CLOUDINARY_CLOUD_NAME=dmzvdft8j
+CLOUDINARY_API_KEY=345327696951997
+CLOUDINARY_API_SECRET=y5fK28L8kDdr3EzkJRUD9ARGyeU
+
+# RESEND_API_KEY=re_8jNvjuqW_3fU1JtCZ5NZA9hD5KWXqZGBb
+
+EMAIL_FROM=mariyaefrony@gmail.com
+
+# Add these to your .env.local
+EMAIL_USER=mariyaefrony@gmail.com
+EMAIL_PASS=umlcavkxfvkbdlub
+
+
+NEXT_PUBLIC_BASE_URL=https://smart-libruary-git-master-mariyaefronys-projects.vercel.app/
